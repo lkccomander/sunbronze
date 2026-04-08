@@ -52,15 +52,15 @@ Build the SunBronze barber scheduling platform in three stages:
   - appointment management
   - customer lookup
   - audit-friendly actions
-- Verify authentication, authorization, and staff endpoints behave correctly at runtime. `pending`
+- Verify authentication, authorization, and staff endpoints behave correctly at runtime. ✅
 
 ### Phase 5: WhatsApp integration
 
-- Define webhook endpoints for inbound WhatsApp messages. ✅
-- Persist inbound and outbound messages in `whatsapp_messages`. ✅
-- Add conversation state handling for booking, rescheduling, cancellation, FAQ, and human handoff. ✅
-- Add reminder job processing linked to appointments. ✅
-- Verify WhatsApp webhook, message persistence, and reminder flows behave correctly at runtime. ✅
+- Define webhook endpoints for inbound WhatsApp messages.
+- Persist inbound and outbound messages in `whatsapp_messages`.
+- Add conversation state handling for booking, rescheduling, cancellation, FAQ, and human handoff.
+- Add reminder job processing linked to appointments.
+- Verify WhatsApp webhook, message persistence, and reminder flows behave correctly at runtime. `pending`
 
 ### Phase 6: Frontend
 

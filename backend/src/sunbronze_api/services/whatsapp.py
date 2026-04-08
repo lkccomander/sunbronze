@@ -1,17 +1,24 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Iterable
 
+import httpx
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from sunbronze_api.core.config import get_settings
 from sunbronze_api.models.entities import Appointment, Conversation, Customer, ReminderJob, WhatsappMessage
 from sunbronze_api.models.enums import ConversationIntent, ConversationState, MessageDirection, MessageKind, MessageStatus, ReminderStatus
 from sunbronze_api.schemas.whatsapp import (
     ConversationStateSummary,
+    MetaWebhookChange,
     ReminderJobSummary,
+    WhatsAppMetaWebhookPayload,
     WhatsAppInboundMessage,
     WhatsAppMessageSummary,
+    WhatsAppWebhookReceiveAck,
 )
 
 
@@ -68,6 +75,7 @@ def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage
     conversation.last_outbound_at = outbound.created_at
 
     db.commit()
+    _attempt_meta_outbound_send(db, customer.whatsapp_phone_e164, outbound)
     db.refresh(conversation)
     return ConversationStateSummary.model_validate(conversation)
 
@@ -107,6 +115,25 @@ def process_reminder_jobs(db: Session) -> list[ReminderJobSummary]:
 
     db.commit()
     return processed
+
+
+def verify_meta_webhook_subscription(mode: str | None, verify_token: str | None, challenge: str | None) -> str:
+    settings = get_settings()
+    if mode != "subscribe" or not challenge:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook verification request.")
+    if not settings.whatsapp_meta_verify_token:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Meta webhook verify token is not configured.")
+    if verify_token != settings.whatsapp_meta_verify_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook verify token does not match.")
+    return challenge
+
+
+def handle_meta_webhook(db: Session, payload: WhatsAppMetaWebhookPayload) -> WhatsAppWebhookReceiveAck:
+    processed_messages = 0
+    for message in _iter_meta_inbound_messages(payload):
+        handle_inbound_whatsapp_message(db, message)
+        processed_messages += 1
+    return WhatsAppWebhookReceiveAck(provider="meta_cloud_api", processed_messages=processed_messages)
 
 
 def enqueue_default_reminder_jobs(db: Session, appointment: Appointment) -> None:
@@ -175,3 +202,78 @@ def _build_auto_reply(conversation: Conversation) -> str:
     if conversation.state == ConversationState.CHOOSE_SERVICE:
         return "Booking flow started. Which service would you like to schedule?"
     return "Message received. How can we help you today?"
+
+
+def _iter_meta_inbound_messages(payload: WhatsAppMetaWebhookPayload) -> Iterable[WhatsAppInboundMessage]:
+    for entry in payload.entry:
+        for change in entry.changes:
+            yield from _messages_from_meta_change(change)
+
+
+def _messages_from_meta_change(change: MetaWebhookChange) -> Iterable[WhatsAppInboundMessage]:
+    if change.field != "messages":
+        return []
+
+    results: list[WhatsAppInboundMessage] = []
+    for message in change.value.messages:
+        if message.type != "text" or message.text is None:
+            continue
+        received_at = None
+        if message.timestamp and message.timestamp.isdigit():
+            received_at = datetime.fromtimestamp(int(message.timestamp), UTC)
+        from_phone = _normalize_whatsapp_phone(message.from_phone)
+        results.append(
+            WhatsAppInboundMessage(
+                chat_id=from_phone,
+                from_phone_e164=from_phone,
+                provider_message_id=message.id,
+                body=message.text.body,
+                received_at=received_at,
+            )
+        )
+    return results
+
+
+def _normalize_whatsapp_phone(value: str) -> str:
+    digits = value.strip()
+    return digits if digits.startswith("+") else f"+{digits}"
+
+
+def _attempt_meta_outbound_send(db: Session, to_phone: str, outbound: WhatsappMessage) -> None:
+    settings = get_settings()
+    if not settings.whatsapp_meta_access_token or not settings.whatsapp_meta_phone_number_id:
+        return
+
+    url = (
+        f"https://graph.facebook.com/{settings.whatsapp_meta_graph_api_version}/"
+        f"{settings.whatsapp_meta_phone_number_id}/messages"
+    )
+    try:
+        response = httpx.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {settings.whatsapp_meta_access_token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "messaging_product": "whatsapp",
+                "to": to_phone.lstrip("+"),
+                "type": "text",
+                "text": {"body": outbound.body or ""},
+            },
+            timeout=10.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        messages = data.get("messages") or []
+        outbound.status = MessageStatus.SENT
+        outbound.sent_at = datetime.now(UTC)
+        if messages and isinstance(messages[0], dict):
+            outbound.provider_message_id = messages[0].get("id") or outbound.provider_message_id
+        outbound.error_message = None
+    except httpx.HTTPError as exc:
+        outbound.status = MessageStatus.FAILED
+        outbound.error_message = str(exc)
+
+    db.add(outbound)
+    db.commit()

@@ -12,6 +12,7 @@ def test_phase_5_whatsapp_webhook_endpoints() -> None:
 
     app = create_app()
     assert any("whatsapp" in path and "webhook" in path for path in route_paths(app))
+    assert "/api/whatsapp/meta/webhook" in route_paths(app)
 
 
 def test_phase_5_message_persistence() -> None:
@@ -51,6 +52,7 @@ def test_phase_5_runtime_whatsapp_surfaces_are_exposed() -> None:
     components_text = str(schema.get("components", {})).lower()
     assert "whatsapp" in paths
     assert "webhook" in paths
+    assert "/api/whatsapp/meta/webhook" in paths
     assert source_contains_any(components_text, "message", "conversation", "reminder")
 
 

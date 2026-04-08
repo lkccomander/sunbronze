@@ -9,6 +9,7 @@
 - Chose to keep FastAPI dependencies explicit with `fastapi` plus `uvicorn[standard]` instead of switching to `fastapi[standard]`.
 - Avoided `fastapi dev` in local startup scripts because the project does not rely on the optional FastAPI CLI extras; `uvicorn` is already installed and is sufficient to boot the app.
 - Kept FastAPI boot verification as an open item until it is confirmed from the project Windows environment.
+- Kept the original local Phase 5 webhook contract for tests and added a separate Meta-compatible webhook path at `/api/whatsapp/meta/webhook` so real phone/provider integration does not destabilize the in-process test suite.
 
 ## 2026-04-07
 

@@ -38,3 +38,24 @@ For Phase 1, migrations stay SQL-first using versioned scripts in [`DB/`](../DB)
 - `core/`: app settings
 - `db/`: SQLAlchemy base and session
 - `models/`: ORM models aligned to the Postgres schema
+
+## WhatsApp webhook modes
+
+- `POST /api/whatsapp/webhook` is the local test-friendly webhook used by the Phase 5 suite.
+- `GET /api/whatsapp/meta/webhook` is the Meta verification endpoint for a public deployment.
+- `POST /api/whatsapp/meta/webhook` accepts Meta-style inbound webhook payloads.
+
+To prepare for real phone testing, set these environment variables in `.env` or in Railway:
+
+```env
+SUNBRONZE_WHATSAPP_META_VERIFY_TOKEN=your_verify_token
+SUNBRONZE_WHATSAPP_META_ACCESS_TOKEN=your_meta_access_token
+SUNBRONZE_WHATSAPP_META_PHONE_NUMBER_ID=your_phone_number_id
+SUNBRONZE_WHATSAPP_META_GRAPH_API_VERSION=v23.0
+```
+
+Then expose the public webhook URL:
+
+```text
+https://<your-domain>/api/whatsapp/meta/webhook
+```
