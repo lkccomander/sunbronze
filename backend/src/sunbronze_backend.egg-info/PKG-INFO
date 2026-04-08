@@ -1,0 +1,54 @@
+Metadata-Version: 2.4
+Name: sunbronze-backend
+Version: 0.1.0
+Summary: FastAPI backend for the SunBronze WhatsApp receptionist platform.
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0.0,>=0.122.0
+Requires-Dist: uvicorn[standard]<1.0.0,>=0.30.0
+Requires-Dist: sqlalchemy<3.0.0,>=2.0.0
+Requires-Dist: psycopg[binary]<4.0.0,>=3.2.0
+Requires-Dist: pydantic-settings<3.0.0,>=2.3.0
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.0.0; extra == "dev"
+
+# SunBronze Backend
+
+FastAPI backend scaffold for the WhatsApp receptionist and barber scheduling platform.
+
+## Run locally
+
+1. Create and activate a Python virtual environment.
+2. Install the project:
+
+```bash
+pip install -e .
+```
+
+3. Copy the environment file:
+
+```bash
+cp .env.example .env
+```
+
+4. Start the API:
+
+```bash
+fastapi dev src/sunbronze_api/main.py
+```
+
+## Health checks
+
+- `GET /api/health` returns app metadata and verifies database connectivity with `SELECT 1`.
+- When Postgres is unavailable, the endpoint responds with HTTP `503` and `"database": "unavailable"`.
+
+## Migration approach
+
+For Phase 1, migrations stay SQL-first using versioned scripts in [`DB/`](../DB) instead of Alembic. This matches the existing schema source of truth and keeps backend work aligned with the hand-maintained Postgres design.
+
+## Initial modules
+
+- `api/`: HTTP routers
+- `core/`: app settings
+- `db/`: SQLAlchemy base and session
+- `models/`: ORM models aligned to the Postgres schema

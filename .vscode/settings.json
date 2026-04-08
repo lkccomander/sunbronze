@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "C:\\Projects\\sunbronze\\.venv\\Scripts\\python.exe",
+  "ruff.interpreter": [
+    "C:\\Projects\\sunbronze\\.venv\\Scripts\\python.exe"
+  ]
+}

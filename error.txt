@@ -1,0 +1,14 @@
+======================================================================================================== warnings summary ======================================================================================================== 
+Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
+  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:43: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    conversation.last_inbound_at = message.received_at or datetime.utcnow()
+
+Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
+  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=message.received_at or datetime.utcnow(),
+
+Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
+  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:65: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
