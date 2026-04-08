@@ -9,6 +9,7 @@ def test_phase_4_authentication_for_system_users() -> None:
     combined_text = "\n".join(read_text(path) for path in find_python_files("backend/src/sunbronze_api"))
     assert source_contains_any(combined_text, "system_users", "SystemUser")
     assert source_contains_any(combined_text, "login", "token", "authenticate", "password")
+    assert "Login is disabled until a password is configured." in combined_text
 
 
 def test_phase_4_role_aware_authorization() -> None:

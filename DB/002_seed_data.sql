@@ -215,7 +215,7 @@ INSERT INTO app.system_users (
 SELECT
     l.id,
     v.email,
-    NULL,
+    '8b41e68aa629ae9f846c1a9365698baf7887314e26ece9397214b0485bcb423e',
     v.first_name,
     v.last_name,
     v.display_name,
@@ -231,6 +231,7 @@ WHERE l.code = 'sunbronze-main'
 ON CONFLICT (email) DO UPDATE
 SET
     location_id = EXCLUDED.location_id,
+    password_hash = EXCLUDED.password_hash,
     first_name = EXCLUDED.first_name,
     last_name = EXCLUDED.last_name,
     display_name = EXCLUDED.display_name,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -24,14 +24,16 @@ def authenticate_user(db: Session, email: str, password: str) -> AuthToken:
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid login credentials.")
 
-    if user.password_hash:
-        expected_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-        if user.password_hash != expected_hash:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid login credentials.")
+    if not user.password_hash:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login is disabled until a password is configured.")
+
+    expected_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+    if user.password_hash != expected_hash:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid login credentials.")
 
     token = secrets.token_urlsafe(32)
     _TOKEN_STORE[token] = user.id
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(UTC)
     db.commit()
 
     roles = [user_role.role.code for user_role in user.user_roles if user_role.role]
