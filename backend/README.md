@@ -59,3 +59,24 @@ Then expose the public webhook URL:
 ```text
 https://<your-domain>/api/whatsapp/meta/webhook
 ```
+
+## Railway database migration
+
+The app accepts either `SUNBRONZE_DATABASE_URL` or Railway's native `DATABASE_URL`.
+
+Recommended migration flow:
+
+1. Provision a PostgreSQL service in Railway.
+2. Copy the Railway Postgres connection string.
+3. Export the local database with `pg_dump`.
+4. Import into Railway with `psql`.
+5. Deploy the API service and let it use Railway's `DATABASE_URL`.
+
+Example commands from Windows PowerShell:
+
+```powershell
+pg_dump --clean --if-exists --no-owner --no-privileges -U postgres -d sunbronze > sunbronze_dump.sql
+psql "<RAILWAY_DATABASE_URL>" -f .\sunbronze_dump.sql
+```
+
+If the imported database is meant to include the barber test scenario, run the dedicated seed locally before dumping or run `DB/003_seed_barbertest.sql` against Railway after import.
