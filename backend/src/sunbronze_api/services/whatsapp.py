@@ -273,7 +273,12 @@ def _attempt_meta_outbound_send(db: Session, to_phone: str, outbound: WhatsappMe
         outbound.error_message = None
     except httpx.HTTPError as exc:
         outbound.status = MessageStatus.FAILED
-        outbound.error_message = str(exc)
+        response = getattr(exc, "response", None)
+        if response is not None:
+            details = response.text.strip()
+            outbound.error_message = details or str(exc)
+        else:
+            outbound.error_message = str(exc)
 
     db.add(outbound)
     db.commit()
