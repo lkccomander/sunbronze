@@ -88,6 +88,13 @@ def list_conversation_states(db: Session) -> list[ConversationStateSummary]:
     return [ConversationStateSummary.model_validate(item) for item in db.scalars(select(Conversation).limit(100)).all()]
 
 
+def list_reminder_jobs(db: Session) -> list[ReminderJobSummary]:
+    return [
+        ReminderJobSummary.model_validate(item)
+        for item in db.scalars(select(ReminderJob).order_by(ReminderJob.scheduled_for.desc()).limit(100)).all()
+    ]
+
+
 def process_reminder_jobs(db: Session) -> list[ReminderJobSummary]:
     now = datetime.now(UTC)
     jobs = list(

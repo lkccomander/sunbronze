@@ -1,15 +1,18 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { getApiStatus } from "@/lib/api";
+
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/appointments", label: "Appointments" },
   { href: "/customers", label: "Customers" },
   { href: "/conversations", label: "Conversations" },
   { href: "/services", label: "Services" },
+  { href: "/dev", label: "Dev" },
 ];
 
-export function AppShell({
+export async function AppShell({
   title,
   eyebrow,
   children,
@@ -18,6 +21,8 @@ export function AppShell({
   eyebrow: string;
   children: ReactNode;
 }) {
+  const apiStatus = await getApiStatus();
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(229,93,45,0.18),_transparent_34%),linear-gradient(180deg,_#f7f1e7_0%,_#f3ead9_46%,_#efe3d0_100%)] text-ink">
       <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-4 py-6 md:px-6">
@@ -51,8 +56,14 @@ export function AppShell({
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ember">{eyebrow}</p>
               <h2 className="mt-3 font-display text-4xl leading-none md:text-5xl">{title}</h2>
             </div>
-            <div className="rounded-2xl bg-sand px-4 py-3 text-sm text-ink/70">
-              Web receptionist shell ready for Phase 6 screen work.
+            <div className="flex items-center gap-3 self-start rounded-2xl bg-sand px-4 py-3 text-sm text-ink/70 md:self-auto">
+              <span
+                className={`inline-block h-3 w-3 rounded-full ${
+                  apiStatus.online ? "bg-green-500 shadow-[0_0_14px_rgba(34,197,94,0.55)]" : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
+                }`}
+                aria-hidden="true"
+              />
+              <span>{apiStatus.label}</span>
             </div>
           </div>
           <div className="mt-6">{children}</div>

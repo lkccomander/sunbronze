@@ -18,6 +18,7 @@ from sunbronze_api.services.whatsapp import (
     handle_inbound_whatsapp_message,
     handle_meta_webhook,
     list_conversation_states,
+    list_reminder_jobs,
     list_whatsapp_messages,
     process_reminder_jobs,
     verify_meta_webhook_subscription,
@@ -72,6 +73,14 @@ def list_whatsapp_conversations_route(
     db: Session = Depends(get_db_session),
 ) -> list[ConversationStateSummary]:
     return list_conversation_states(db)
+
+
+@router.get("/reminders", response_model=list[ReminderJobSummary])
+def list_reminders_route(
+    _: AuthenticatedUser = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> list[ReminderJobSummary]:
+    return list_reminder_jobs(db)
 
 
 @router.post("/reminders/process", response_model=list[ReminderJobSummary])
