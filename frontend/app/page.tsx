@@ -14,7 +14,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/dashboard" className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-sand transition hover:bg-plum">
-                Open Dashboard
+                Connect Reception Workspace
               </Link>
               <Link href="/login" className="rounded-full border border-ink/15 bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-sand">
                 Staff Login Shell

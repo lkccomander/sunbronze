@@ -48,6 +48,20 @@ export type ReminderJobSummary = {
   processed_at: string | null;
 };
 
+async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 2500): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export function getApiBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_API_BASE_URL || FALLBACK_API_BASE_URL).replace(/\/$/, "");
 }
@@ -57,7 +71,7 @@ export function getServerApiBaseUrl(): string {
 }
 
 export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getServerApiBaseUrl()}${path}`, {
+  const response = await fetchWithTimeout(`${getServerApiBaseUrl()}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -75,7 +89,7 @@ export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise
 
 export async function getApiStatus(): Promise<ApiStatus> {
   try {
-    const response = await fetch(`${getServerApiBaseUrl()}/api/health`, {
+    const response = await fetchWithTimeout(`${getServerApiBaseUrl()}/api/health`, {
       cache: "no-store",
     });
 

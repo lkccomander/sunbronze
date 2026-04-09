@@ -50,6 +50,8 @@ pg_dump --clean --if-exists --no-owner --no-privileges -U postgres -d sunbronze 
 - Meta's test number flow is the fastest and safest way to validate the integration before migrating a real business number.
 - A personal or business number already registered with WhatsApp cannot be attached directly to Cloud API without migration or disconnection first.
 - Callback verification should be tested manually before saving in Meta.
+- While the Meta app is unpublished, the webhook can receive dashboard-sent test events, but production data will not be delivered to the API yet.
+- Receiving a message in the test-number flow proves the integration path works, but it does not mean the Meta app is already production-ready.
 
 Manual verification pattern:
 
@@ -175,6 +177,7 @@ Why:
 
 - this avoids early migration risk with a real business number
 - it validates webhook reception and outbound replies first
+- it works even while the app is still in a pre-production Meta state
 
 ### 7. Validate persistence in SunBronze
 
@@ -219,6 +222,36 @@ Safer order:
 1. finish the integration with the Meta test number
 2. confirm inbound and outbound behavior
 3. only then decide whether to migrate a real business number into Cloud API
+
+## Production checklist for Meta WhatsApp
+
+Before expecting real customer traffic through the webhook, confirm:
+
+1. The Meta app is published or otherwise in the required live state for production delivery.
+2. Any required business verification is complete.
+3. The WhatsApp product is configured for the real business number, not only the Meta test number.
+4. The public callback URL still verifies successfully:
+
+```text
+https://<your-railway-domain>/api/whatsapp/meta/webhook?hub.mode=subscribe&hub.verify_token=<your-token>&hub.challenge=12345
+```
+
+5. Railway production variables are present:
+
+```text
+SUNBRONZE_ENV=production
+SUNBRONZE_DEBUG=false
+SUNBRONZE_WHATSAPP_META_VERIFY_TOKEN=...
+SUNBRONZE_WHATSAPP_META_ACCESS_TOKEN=...
+SUNBRONZE_WHATSAPP_META_PHONE_NUMBER_ID=...
+SUNBRONZE_WHATSAPP_META_GRAPH_API_VERSION=v23.0
+```
+
+6. A real inbound message sent outside the Meta dashboard appears in:
+   - `app.whatsapp_messages`
+   - `app.conversations`
+
+If Meta still shows the warning that unpublished apps only receive dashboard test webhooks, treat the integration as verified for development but not yet production-live.
 
 ## Follow-up security work still recommended
 
