@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from sunbronze_api.api.deps import require_staff_user
 from sunbronze_api.db.session import get_db_session
+from sunbronze_api.schemas.auth import AuthenticatedUser
 from sunbronze_api.schemas.whatsapp import (
     ConversationStateSummary,
     ReminderJobSummary,
@@ -57,15 +59,24 @@ def receive_meta_whatsapp_webhook_route(
 
 
 @router.get("/messages", response_model=list[WhatsAppMessageSummary])
-def list_whatsapp_messages_route(db: Session = Depends(get_db_session)) -> list[WhatsAppMessageSummary]:
+def list_whatsapp_messages_route(
+    _: AuthenticatedUser = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> list[WhatsAppMessageSummary]:
     return list_whatsapp_messages(db)
 
 
 @router.get("/conversations", response_model=list[ConversationStateSummary])
-def list_whatsapp_conversations_route(db: Session = Depends(get_db_session)) -> list[ConversationStateSummary]:
+def list_whatsapp_conversations_route(
+    _: AuthenticatedUser = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> list[ConversationStateSummary]:
     return list_conversation_states(db)
 
 
 @router.post("/reminders/process", response_model=list[ReminderJobSummary])
-def process_reminders_route(db: Session = Depends(get_db_session)) -> list[ReminderJobSummary]:
+def process_reminders_route(
+    _: AuthenticatedUser = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> list[ReminderJobSummary]:
     return process_reminder_jobs(db)

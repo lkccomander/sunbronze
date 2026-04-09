@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from conftest import find_python_files, read_text, require_step_ready, route_paths, runtime_api_client, runtime_get, runtime_post, source_contains_any
+from conftest import find_python_files, read_text, require_step_ready, route_paths, runtime_api_client, runtime_get, runtime_post, runtime_staff_headers, source_contains_any
 
 
 def test_phase_5_whatsapp_webhook_endpoints() -> None:
@@ -65,6 +65,11 @@ def test_phase_5_runtime_webhook_persists_messages_and_updates_conversation() ->
     provider_message_id = f"runtime-phase-5-message-{suffix}"
 
     with runtime_api_client() as client:
+        protected_messages = runtime_get(client, "/api/whatsapp/messages")
+        assert protected_messages.status_code == 401
+        protected_conversations = runtime_get(client, "/api/whatsapp/conversations")
+        assert protected_conversations.status_code == 401
+
         response = runtime_post(
             client,
             "/api/whatsapp/webhook",
@@ -84,13 +89,15 @@ def test_phase_5_runtime_webhook_persists_messages_and_updates_conversation() ->
         assert conversation["state"] == "choose_service"
         assert conversation["active_intent"] == "book"
 
-        messages_response = runtime_get(client, "/api/whatsapp/messages")
+        headers = runtime_staff_headers(client)
+
+        messages_response = runtime_get(client, "/api/whatsapp/messages", headers=headers)
         assert messages_response.status_code == 200
         messages = messages_response.json()
         assert any(message.get("provider_message_id") == provider_message_id for message in messages)
         assert any(message.get("body") == "Booking flow started. Which service would you like to schedule?" for message in messages)
 
-        conversations_response = runtime_get(client, "/api/whatsapp/conversations")
+        conversations_response = runtime_get(client, "/api/whatsapp/conversations", headers=headers)
         assert conversations_response.status_code == 200
         conversations = conversations_response.json()
         assert any(item.get("whatsapp_chat_id") == unique_chat_id and item.get("active_intent") == "book" for item in conversations)

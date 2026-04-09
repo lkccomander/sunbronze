@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from conftest import live_api_base_url, live_api_get, live_api_post, source_contains_any
+from conftest import live_api_base_url, live_api_get, live_api_post, live_api_staff_headers, source_contains_any
 
 
 def test_live_api_health_endpoint_is_reachable() -> None:
@@ -40,6 +40,11 @@ def test_live_api_whatsapp_webhook_flow_persists_messages() -> None:
     phone = f"+1555{suffix[:7]}"
     provider_message_id = f"live-phase-5-message-{suffix}"
 
+    protected_messages = live_api_get("/api/whatsapp/messages")
+    assert protected_messages.status_code == 401
+    protected_conversations = live_api_get("/api/whatsapp/conversations")
+    assert protected_conversations.status_code == 401
+
     response = live_api_post(
         "/api/whatsapp/webhook",
         json={
@@ -58,13 +63,15 @@ def test_live_api_whatsapp_webhook_flow_persists_messages() -> None:
     assert conversation["state"] == "choose_service"
     assert conversation["active_intent"] == "book"
 
-    messages_response = live_api_get("/api/whatsapp/messages")
+    headers = live_api_staff_headers()
+
+    messages_response = live_api_get("/api/whatsapp/messages", headers=headers)
     assert messages_response.status_code == 200
     messages = messages_response.json()
     assert any(message.get("provider_message_id") == provider_message_id for message in messages)
     assert any(message.get("body") == "Booking flow started. Which service would you like to schedule?" for message in messages)
 
-    conversations_response = live_api_get("/api/whatsapp/conversations")
+    conversations_response = live_api_get("/api/whatsapp/conversations", headers=headers)
     assert conversations_response.status_code == 200
     conversations = conversations_response.json()
     assert any(item.get("whatsapp_chat_id") == chat_id and item.get("active_intent") == "book" for item in conversations)

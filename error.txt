@@ -1,14 +1,45 @@
-======================================================================================================== warnings summary ======================================================================================================== 
-Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
-  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:43: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    conversation.last_inbound_at = message.received_at or datetime.utcnow()
+.....F                                                                                                                                                                                                                      [100%]
+============================================================================================================ FAILURES ============================================================================================================ 
+____________________________________________________________________________ test_phase_5_runtime_webhook_persists_messages_and_updates_conversation _____________________________________________________________________________ 
 
-Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
-  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    created_at=message.received_at or datetime.utcnow(),
+    def test_phase_5_runtime_webhook_persists_messages_and_updates_conversation() -> None:
+        require_step_ready("Verify WhatsApp webhook, message persistence, and reminder flows behave correctly at runtime.")
 
-Test/test_phase_5.py::test_phase_5_runtime_webhook_persists_messages_and_updates_conversation
-  C:\Projects\sunbronze\backend\src\sunbronze_api\services\whatsapp.py:65: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    created_at=datetime.utcnow(),
+        suffix = uuid4().hex[:12]
+        unique_phone = f"+1555{suffix[:7]}"
+        unique_chat_id = f"runtime-phase-5-chat-{suffix}"
+        provider_message_id = f"runtime-phase-5-message-{suffix}"
 
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+        with runtime_api_client() as client:
+            protected_messages = runtime_get(client, "/api/whatsapp/messages")
+            assert protected_messages.status_code == 401
+            protected_conversations = runtime_get(client, "/api/whatsapp/conversations")
+            assert protected_conversations.status_code == 401
+
+            response = runtime_post(
+                client,
+                "/api/whatsapp/webhook",
+                json={
+                    "message": {
+                        "chat_id": unique_chat_id,
+                        "from_phone_e164": unique_phone,
+                        "provider_message_id": provider_message_id,
+                        "body": "I want to book a corte",
+                    }
+                },
+            )
+            assert response.status_code == 200
+
+            conversation = response.json()
+            assert conversation["whatsapp_chat_id"] == unique_chat_id
+            assert conversation["state"] == "choose_service"
+            assert conversation["active_intent"] == "book"
+
+            headers = runtime_staff_headers(client)
+
+>           messages_response = runtime_get(client, "/api/whatsapp/messages", headers=headers)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: runtime_get() got an unexpected keyword argument 'headers'
+
+Test\test_phase_5.py:94: TypeError
+1 failed, 5 passed in 6.99s

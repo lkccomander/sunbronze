@@ -61,9 +61,9 @@ def runtime_api_client():
     return TestClient(create_app())
 
 
-def runtime_get(client, path: str):
+def runtime_get(client, path: str, **kwargs):
     try:
-        return client.get(path)
+        return client.get(path, **kwargs)
     except Exception as exc:
         message = str(exc).strip().splitlines()[0] if str(exc).strip() else exc.__class__.__name__
         pytest.xfail(f"Runtime API request failed for {path}: {message}")
@@ -75,6 +75,18 @@ def runtime_post(client, path: str, **kwargs):
     except Exception as exc:
         message = str(exc).strip().splitlines()[0] if str(exc).strip() else exc.__class__.__name__
         pytest.xfail(f"Runtime API request failed for {path}: {message}")
+
+
+def runtime_staff_headers(client, email: str = "admin@sunbronze.local", password: str = "phase4-runtime") -> dict[str, str]:
+    response = runtime_post(
+        client,
+        "/api/auth/login",
+        json={"email": email, "password": password},
+    )
+    if response.status_code != 200:
+        pytest.xfail(f"Runtime staff login failed for {email}: {response.text}")
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 def live_api_base_url() -> str:
@@ -109,6 +121,17 @@ def live_api_post(path: str, **kwargs):
     except httpx.HTTPError as exc:
         message = str(exc).strip().splitlines()[0] if str(exc).strip() else exc.__class__.__name__
         pytest.xfail(f"Live API request failed for {url}: {message}")
+
+
+def live_api_staff_headers(email: str = "admin@sunbronze.local", password: str = "phase4-runtime") -> dict[str, str]:
+    response = live_api_post(
+        "/api/auth/login",
+        json={"email": email, "password": password},
+    )
+    if response.status_code != 200:
+        pytest.xfail(f"Live staff login failed for {email}: {response.text}")
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 def route_paths(app) -> set[str]:
