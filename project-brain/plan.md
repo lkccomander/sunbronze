@@ -64,18 +64,18 @@ Build the SunBronze barber scheduling platform in three stages:
 
 ### Phase 5.5: Real WhatsApp provider integration
 
-- Add Meta-compatible webhook verification for a public deployment.
-- Add Meta-style inbound payload parsing for real phone messages.
-- Add provider configuration for verify token, access token, phone number id, and Graph API version.
-- Add optional outbound message delivery through the Meta API.
-- Prepare Railway environment variables and public webhook deployment steps.
-- Verify a real WhatsApp message from a phone reaches the deployed API and is persisted end to end. `pending`
+- Add Meta-compatible webhook verification for a public deployment. ✅
+- Add Meta-style inbound payload parsing for real phone messages. ✅
+- Add provider configuration for verify token, access token, phone number id, and Graph API version. ✅
+- Add optional outbound message delivery through the Meta API. ✅
+- Prepare Railway environment variables and public webhook deployment steps. ✅
+- Verify a real WhatsApp message from a phone reaches the deployed API and is persisted end to end. ✅
 
 ### Phase 6: Frontend
 
-- Choose the frontend stack.
-- Build a receptionist/admin interface first.
-- Build core screens for:
+- Choose the frontend stack. ✅
+- Build a receptionist/admin interface first. ✅
+- Build core screens for: ✅
   - dashboard
   - appointments calendar/list
   - customer search

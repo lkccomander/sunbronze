@@ -2,6 +2,55 @@
 
 ## 2026-04-08
 
+### Railway deployment and runtime configuration
+
+- Chose Railway as the first public deployment target for the FastAPI backend because Phase 5.5 required a public HTTPS webhook URL for Meta.
+- Chose to keep the Railway service rooted at `backend/` instead of the repo root so build and start commands stay focused on the backend package.
+- Standardized the Railway backend build command to `pip install -r requirements.txt && pip install -e .` inside `backend/`.
+- Standardized the Railway backend start command to `python -m uvicorn sunbronze_api.main:app --host 0.0.0.0 --port $PORT`.
+- Added `backend/requirements.txt` so the Railway service root is self-contained and does not depend on the repo-root `requirements.txt`.
+- Chose to support both `SUNBRONZE_DATABASE_URL` and Railway's native `DATABASE_URL` in application settings so local and hosted environments can share the same code path.
+- Chose to use an explicit `postgresql+psycopg://` connection string in Railway so SQLAlchemy uses `psycopg` instead of defaulting to `psycopg2`.
+- Chose to set production-oriented runtime variables in Railway rather than in the local `.env`, especially `SUNBRONZE_ENV=production` and `SUNBRONZE_DEBUG=false`.
+
+### Phase 5.5 Meta WhatsApp integration
+
+- Chose to keep the local mock webhook at `/api/whatsapp/webhook` for tests and add a separate provider-compatible path at `/api/whatsapp/meta/webhook` for Meta Cloud API traffic.
+- Chose Meta WhatsApp Cloud API as the first real provider integration path instead of introducing Twilio.
+- Added support for Meta webhook subscription verification using `hub.mode`, `hub.verify_token`, and `hub.challenge`.
+- Added provider configuration through environment variables for verify token, access token, phone number id, and Graph API version.
+- Chose to start with Meta's test number flow before migrating a real business number, because it is safer and faster to validate end-to-end behavior.
+- Chose to use the Meta developer console flow at `https://developers.facebook.com/apps/1695547714807698/use_cases/customize/wa-dev-console/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&business_id=924671457108486&selected_tab=wa-dev-console` as the operator-facing setup path for this project.
+- Chose to capture Meta outbound error response bodies in the database so provider-side failures can be diagnosed from application data instead of from generic HTTP status text alone.
+
+### Security hardening
+
+- Fixed the critical auth bypass where active `system_users` with `password_hash = NULL` could log in without a real password.
+- Chose to seed local staff users with a real SHA-256 password hash for the known test password `phase4-runtime` so runtime auth tests remain deterministic.
+- Temporarily deactivated Railway `system_users` with null password hashes until real password hashes were set.
+- Protected sensitive WhatsApp staff surfaces with auth:
+  - `GET /api/whatsapp/messages`
+  - `GET /api/whatsapp/conversations`
+  - `POST /api/whatsapp/reminders/process`
+- Chose not to switch to JWT yet; current auth remains in-memory bearer tokens while Phase 5.5 and Phase 6 move forward.
+
+### Phase 6 frontend stack
+
+- Chose `Next.js` with `TypeScript` for the frontend.
+- Chose to place the frontend in a new top-level `frontend/` workspace so it stays clearly separated from the FastAPI backend.
+- Chose the App Router approach so the receptionist/admin interface can mix server-rendered pages with client-side interaction where needed.
+- Chose to start with a web admin/receptionist interface rather than a mobile app because the current priority is staff operations, conversations, and schedule management.
+- Chose to keep styling simple and productive at the start with `Tailwind CSS`, while avoiding heavy component-library lock-in until the first screens are stable.
+- Chose `fetch`-based API integration first instead of introducing a large client-state library on day one; we can add one later if the frontend data flows become complex.
+
+### Data migration and runtime testing
+
+- Chose `pg_dump -f` instead of PowerShell redirection when exporting the local Postgres database for Railway, because PowerShell output redirection produced an invalid encoded SQL dump.
+- Chose to keep two kinds of runtime verification in the project:
+  - in-process FastAPI `TestClient` checks for app-level runtime behavior
+  - live API checks against the actual running server for deployment verification
+- Added dedicated live API checks once the backend was public so deployment/runtime issues are separated from in-process test behavior.
+
 ### Phase 1 backend stabilization
 
 - Added database connectivity verification to `GET /api/health` by running a lightweight `SELECT 1` probe against the configured Postgres database.
