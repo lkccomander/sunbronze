@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import { getPublicUrl } from "@/lib/url";
 
 const PUBLIC_PATHS = new Set(["/login", "/api/auth/login", "/api/auth/logout"]);
 
@@ -27,13 +28,13 @@ export function middleware(request: NextRequest) {
 
   if (isPublicPath(pathname)) {
     if (pathname === "/login" && hasSession) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(getPublicUrl(request, "/dashboard"));
     }
     return NextResponse.next();
   }
 
   if (!hasSession) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = getPublicUrl(request, "/login");
     const nextPath = `${pathname}${search}`;
     loginUrl.searchParams.set("next", nextPath);
     return NextResponse.redirect(loginUrl);
