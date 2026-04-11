@@ -60,7 +60,6 @@ export default function LoginPage() {
                 autoComplete="email"
                 spellCheck={false}
                 className="mt-2 w-full rounded-2xl border border-ink/10 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-                placeholder="admin@sunbronze.local"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -76,7 +75,6 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 className="mt-2 w-full rounded-2xl border border-ink/10 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-                placeholder="phase4-runtime"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required

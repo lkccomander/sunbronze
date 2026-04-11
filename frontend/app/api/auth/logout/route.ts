@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 
 export async function POST(request: Request) {
-  const response = NextResponse.redirect(new URL("/login", request.url));
+  const response = NextResponse.redirect(new URL("/login", request.url), { status: 303 });
   response.cookies.set(AUTH_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
