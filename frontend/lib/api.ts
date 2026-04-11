@@ -48,6 +48,87 @@ export type ReminderJobSummary = {
   processed_at: string | null;
 };
 
+export type AppointmentSummary = {
+  id: string;
+  customer_id: string;
+  barber_id: string | null;
+  resource_id: string | null;
+  service_id: string;
+  conversation_id: string | null;
+  source: string;
+  status: string;
+  scheduled_start_at: string;
+  scheduled_end_at: string;
+  reserved_start_at: string;
+  reserved_end_at: string;
+  notes: string | null;
+  internal_notes: string | null;
+  cancelled_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BarberSummary = {
+  id: string;
+  location_id: string | null;
+  code: string;
+  first_name: string;
+  last_name: string | null;
+  display_name: string;
+  email: string | null;
+  phone_e164: string | null;
+  time_zone: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ServiceSummary = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  requires_barber: boolean;
+  requires_resource: boolean;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  price_cents: number | null;
+  currency_code: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerSummary = {
+  id: string;
+  whatsapp_phone_e164: string;
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  preferred_barber_id: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StaffCustomerSummary = CustomerSummary;
+
+export type StaffConversationSummary = {
+  id: string;
+  customer_id: string;
+  whatsapp_chat_id: string;
+  state: string;
+  active_intent: string;
+  handed_off_to_human: boolean;
+  assigned_staff_user_id: string | null;
+  last_inbound_at: string | null;
+  last_outbound_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 2500): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -85,6 +166,16 @@ export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise
   }
 
   return response.json() as Promise<T>;
+}
+
+export async function fetchApiJsonWithToken<T>(path: string, accessToken: string, init?: RequestInit): Promise<T> {
+  return fetchApiJson<T>(path, {
+    ...init,
+    headers: {
+      ...(init?.headers || {}),
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 }
 
 export async function getApiStatus(): Promise<ApiStatus> {

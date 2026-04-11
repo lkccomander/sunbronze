@@ -8,5 +8,7 @@ curl -i -X POST `
   -H 'Content-Type: application/json' `
   -d '{ \"messaging_product\": \"whatsapp\", \"to\": \"50686609841\", \"type\": \"template\", \"template\": { \"name\": \"hello_world\", \"language\": { \"code\": \"en_US\" } } }'
 
+Payload key reference: `"messaging_product": "whatsapp"`
+
 
   

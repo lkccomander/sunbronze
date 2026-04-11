@@ -93,10 +93,7 @@ def test_phase_3_runtime_barbertest_booking_rules_and_cancellation() -> None:
         service_id = service.id
 
     monday = datetime.now().astimezone().replace(hour=9, minute=0, second=0, microsecond=0)
-    monday = monday - timedelta(days=monday.weekday())
-    within_schedule = monday.replace(hour=9, minute=0)
-    outside_schedule = monday.replace(hour=7, minute=0)
-    lunch_time = monday.replace(hour=12, minute=0)
+    monday = monday - timedelta(days=monday.weekday()) + timedelta(days=7)
 
     def payload_for(start_at: datetime) -> dict:
         return {
@@ -107,6 +104,25 @@ def test_phase_3_runtime_barbertest_booking_rules_and_cancellation() -> None:
         }
 
     with runtime_api_client() as client:
+        availability_response = client.get(
+            "/api/appointments/availability",
+            params={
+                "service_id": str(service_id),
+                "barber_id": str(barber_id),
+                "starts_at": monday.isoformat(),
+                "ends_at": (monday + timedelta(days=14)).isoformat(),
+                "limit": 1,
+            },
+        )
+        assert availability_response.status_code == 200, availability_response.text
+        available_slots = availability_response.json()
+        assert available_slots, "Expected at least one available barbertest slot for the corte service."
+
+        within_schedule = datetime.fromisoformat(available_slots[0]["start_at"])
+        schedule_day = within_schedule.replace(hour=9, minute=0, second=0, microsecond=0)
+        outside_schedule = schedule_day.replace(hour=7, minute=0)
+        lunch_time = schedule_day.replace(hour=12, minute=0)
+
         create_ok = client.post("/api/appointments", json=payload_for(within_schedule))
         assert create_ok.status_code == 201, create_ok.text
         created_payload = create_ok.json()

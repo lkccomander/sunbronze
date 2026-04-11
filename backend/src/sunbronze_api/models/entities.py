@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, SmallInteger, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -268,7 +268,7 @@ class Appointment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 class AppointmentEvent(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "appointment_events"
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     appointment_id: Mapped[UUID] = uuid_fk("app.appointments.id", nullable=False, ondelete="CASCADE")
     event_name: Mapped[str] = mapped_column(Text, nullable=False)
     actor_type: Mapped[str] = mapped_column(Text, nullable=False)

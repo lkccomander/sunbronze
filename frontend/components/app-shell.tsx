@@ -37,7 +37,7 @@ export async function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className="block rounded-2xl px-4 py-3 text-sm font-medium text-ink/78 transition hover:bg-ink hover:text-sand"
+                className="block rounded-2xl px-4 py-3 text-sm font-medium text-ink/78 transition hover:bg-ink hover:text-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               >
                 {item.label}
               </Link>
@@ -50,20 +50,33 @@ export async function AppShell({
             </p>
           </div>
         </aside>
-        <main className="flex-1 rounded-[32px] border border-white/60 bg-white/75 p-5 shadow-panel backdrop-blur md:p-8">
+        <main
+          id="main"
+          className="flex-1 rounded-[32px] border border-white/60 bg-white/75 p-5 shadow-panel backdrop-blur md:p-8"
+        >
           <div className="flex flex-col gap-3 border-b border-ink/10 pb-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ember">{eyebrow}</p>
               <h2 className="mt-3 font-display text-4xl leading-none md:text-5xl">{title}</h2>
             </div>
-            <div className="flex items-center gap-3 self-start rounded-2xl bg-sand px-4 py-3 text-sm text-ink/70 md:self-auto">
-              <span
-                className={`inline-block h-3 w-3 rounded-full ${
-                  apiStatus.online ? "bg-green-500 shadow-[0_0_14px_rgba(34,197,94,0.55)]" : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
-                }`}
-                aria-hidden="true"
-              />
-              <span>{apiStatus.label}</span>
+            <div className="flex items-center gap-3 self-start md:self-auto">
+              <div className="flex items-center gap-3 rounded-2xl bg-sand px-4 py-3 text-sm text-ink/70">
+                <span
+                  className={`inline-block h-3 w-3 rounded-full ${
+                    apiStatus.online ? "bg-green-500 shadow-[0_0_14px_rgba(34,197,94,0.55)]" : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span>{apiStatus.label}</span>
+              </div>
+              <form action="/api/auth/logout" method="POST">
+                <button
+                  type="submit"
+                  className="rounded-full border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                >
+                  Log out
+                </button>
+              </form>
             </div>
           </div>
           <div className="mt-6">{children}</div>

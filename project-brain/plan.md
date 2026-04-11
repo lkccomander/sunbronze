@@ -81,7 +81,7 @@ Build the SunBronze barber scheduling platform in three stages:
   - customer search
   - conversations inbox
   - services and staff management
-- Verify the frontend boots and core screens render in runtime checks. `pending`
+- Verify the frontend boots and core screens render in runtime checks. ✅
 
 ## Immediate Recommended Order
 

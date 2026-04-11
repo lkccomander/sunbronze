@@ -69,7 +69,7 @@ export default async function DevPage() {
                     <td className="px-3 py-3 uppercase">{item.status}</td>
                     <td className="px-3 py-3 uppercase">{item.kind}</td>
                     <td className="px-3 py-3">{item.provider_name}</td>
-                    <td className="max-w-[28rem] px-3 py-3 text-ink/72">{item.body || "No body"}</td>
+                    <td className="max-w-[28rem] break-words px-3 py-3 text-ink/72">{item.body || "No body"}</td>
                   </tr>
                 ))}
               </tbody>

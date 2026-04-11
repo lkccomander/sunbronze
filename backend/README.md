@@ -49,10 +49,13 @@ To prepare for real phone testing, set these environment variables in `.env` or 
 
 ```env
 SUNBRONZE_WHATSAPP_META_VERIFY_TOKEN=your_verify_token
+SUNBRONZE_WHATSAPP_META_APP_SECRET=your_meta_app_secret
 SUNBRONZE_WHATSAPP_META_ACCESS_TOKEN=your_meta_access_token
 SUNBRONZE_WHATSAPP_META_PHONE_NUMBER_ID=your_phone_number_id
 SUNBRONZE_WHATSAPP_META_GRAPH_API_VERSION=v23.0
 ```
+
+`POST /api/whatsapp/meta/webhook` verifies `X-Hub-Signature-256` with the Meta app secret before parsing or processing the payload. Inbound Meta messages with an already-stored `provider_message_id` are skipped so duplicate delivery retries do not create duplicate conversations, messages, or auto-replies.
 
 Then expose the public webhook URL:
 

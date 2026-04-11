@@ -1,35 +1,138 @@
+import { cookies } from "next/headers";
+
 import { AppShell } from "@/components/app-shell";
-import { Panel } from "@/components/ui";
+import { EmptyState, Panel } from "@/components/ui";
+import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import {
+  type CustomerSummary,
+  type StaffConversationSummary,
+  type WhatsAppMessageSummary,
+  fetchApiJson,
+  fetchApiJsonWithToken,
+} from "@/lib/api";
 
-const samples = [
-  { name: "Cliente WhatsApp", state: "choose_service", preview: "I want to book a corte" },
-  { name: "Cliente FAQ", state: "faq", preview: "What are your business hours?" },
-  { name: "Cliente Human", state: "waiting_human", preview: "Need a real person please." },
-];
+function formatTimestamp(value: string | null): string {
+  if (!value) {
+    return "None";
+  }
 
-export default function ConversationsPage() {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date);
+}
+
+function customerName(customer: CustomerSummary | undefined): string {
+  if (!customer) {
+    return "WhatsApp customer";
+  }
+
+  return customer.display_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.whatsapp_phone_e164;
+}
+
+async function loadConversationData(accessToken: string): Promise<{
+  conversations: StaffConversationSummary[];
+  messages: WhatsAppMessageSummary[];
+  customers: CustomerSummary[];
+}> {
+  const [conversations, messages, customers] = await Promise.all([
+    fetchApiJsonWithToken<StaffConversationSummary[]>("/api/staff/conversations", accessToken).catch(() => []),
+    fetchApiJsonWithToken<WhatsAppMessageSummary[]>("/api/whatsapp/messages", accessToken).catch(() => []),
+    fetchApiJson<CustomerSummary[]>("/api/customers?limit=200").catch(() => []),
+  ]);
+
+  return { conversations, messages, customers };
+}
+
+export default async function ConversationsPage() {
+  const sessionToken = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
+  if (!sessionToken) {
+    return (
+      <AppShell title="Conversations Inbox" eyebrow="WhatsApp">
+        <EmptyState title="Session required" body="Sign in again to load WhatsApp conversations." />
+      </AppShell>
+    );
+  }
+
+  const { conversations, messages, customers } = await loadConversationData(sessionToken);
+  const customerById = new Map(customers.map((item) => [item.id, item]));
+  const latestMessagesByConversation = new Map<string, WhatsAppMessageSummary>();
+
+  for (const message of messages) {
+    if (!message.conversation_id || latestMessagesByConversation.has(message.conversation_id)) {
+      continue;
+    }
+    latestMessagesByConversation.set(message.conversation_id, message);
+  }
+
+  const sortedConversations = [...conversations].sort((left, right) => {
+    const leftDate = left.last_inbound_at || left.last_outbound_at || left.updated_at;
+    const rightDate = right.last_inbound_at || right.last_outbound_at || right.updated_at;
+    return new Date(rightDate).getTime() - new Date(leftDate).getTime();
+  });
+  const selectedConversation = sortedConversations[0];
+  const selectedMessages = selectedConversation
+    ? messages.filter((message) => message.conversation_id === selectedConversation.id).slice(0, 8)
+    : [];
+
   return (
     <AppShell title="Conversations Inbox" eyebrow="WhatsApp">
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <Panel title="Inbox lanes" subtitle="Conversation triage starts here.">
+        <Panel title="Inbox lanes" subtitle="Live conversation states ordered by latest activity.">
           <div className="space-y-3">
-            {samples.map((item) => (
-              <div key={item.name} className="rounded-3xl border border-ink/10 bg-white px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold">{item.name}</p>
-                  <span className="rounded-full bg-plum/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-plum">{item.state}</span>
+            {sortedConversations.map((item) => {
+              const latestMessage = latestMessagesByConversation.get(item.id);
+              return (
+                <div key={item.id} className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold">{customerName(customerById.get(item.customer_id))}</p>
+                    <span className="rounded-full bg-plum/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-plum">{item.state}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-ink/68">{latestMessage?.body || item.whatsapp_chat_id}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink/50">
+                    <span>{item.active_intent}</span>
+                    <span>{item.handed_off_to_human ? "Human handoff" : "Bot active"}</span>
+                    <span>{formatTimestamp(item.last_inbound_at || item.last_outbound_at)}</span>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-ink/68">{item.preview}</p>
-              </div>
-            ))}
+              );
+            })}
+            {sortedConversations.length === 0 ? (
+              <EmptyState title="No conversations returned" body="The staff conversations endpoint is reachable, but no conversation records were returned." />
+            ) : null}
           </div>
         </Panel>
-        <Panel title="Conversation detail" subtitle="Designed for handoff, booking context, and quick replies.">
-          <div className="rounded-[28px] bg-ink p-5 text-sand">
-            <p className="text-sm leading-7 text-sand/80">
-              This pane will host the selected chat transcript, booking suggestions, and staff-assignment controls once Phase 6 wiring begins.
-            </p>
-          </div>
+        <Panel title="Latest thread" subtitle="Most recent conversation with stored WhatsApp messages.">
+          {selectedConversation ? (
+            <div className="rounded-2xl bg-ink p-5 text-sand">
+              <div className="flex flex-col gap-2 border-b border-white/10 pb-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-sand/55">Selected customer</p>
+                  <h3 className="mt-2 font-display text-3xl leading-none">{customerName(customerById.get(selectedConversation.customer_id))}</h3>
+                </div>
+                <p className="text-sm text-sand/65">{selectedConversation.handed_off_to_human ? "Waiting for staff" : "Bot handling"}</p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {selectedMessages.map((message) => (
+                  <article key={message.id} className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                    <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.18em] text-sand/55">
+                      <span>{message.direction}</span>
+                      <span>{formatTimestamp(message.created_at)}</span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-sand/82">{message.body || "No message body stored"}</p>
+                  </article>
+                ))}
+                {selectedMessages.length === 0 ? <p className="text-sm leading-6 text-sand/72">No stored messages are linked to this conversation yet.</p> : null}
+              </div>
+            </div>
+          ) : (
+            <EmptyState title="No conversation selected" body="When conversations exist, the most recent thread appears here for triage." />
+          )}
         </Panel>
       </div>
     </AppShell>

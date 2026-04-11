@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from sunbronze_api.api.deps import require_staff_user
@@ -22,6 +23,7 @@ from sunbronze_api.services.whatsapp import (
     list_whatsapp_messages,
     process_reminder_jobs,
     verify_meta_webhook_subscription,
+    verify_meta_webhook_signature,
 )
 
 router = APIRouter(prefix="/whatsapp")
@@ -52,10 +54,17 @@ def verify_meta_whatsapp_webhook_route(
 
 
 @router.post("/meta/webhook", response_model=WhatsAppWebhookReceiveAck)
-def receive_meta_whatsapp_webhook_route(
-    payload: WhatsAppMetaWebhookPayload,
+async def receive_meta_whatsapp_webhook_route(
+    request: Request,
+    x_hub_signature_256: str | None = Header(default=None, alias="X-Hub-Signature-256"),
     db: Session = Depends(get_db_session),
 ) -> WhatsAppWebhookReceiveAck:
+    body = await request.body()
+    verify_meta_webhook_signature(body, x_hub_signature_256)
+    try:
+        payload = WhatsAppMetaWebhookPayload.model_validate_json(body)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
     return handle_meta_webhook(db, payload)
 
 

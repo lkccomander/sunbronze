@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 from datetime import UTC, datetime, timedelta
 from typing import Iterable
 
@@ -23,6 +25,10 @@ from sunbronze_api.schemas.whatsapp import (
 
 
 def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage) -> ConversationStateSummary:
+    existing_message = _get_existing_inbound_provider_message(db, message.provider_message_id)
+    if existing_message and existing_message.conversation:
+        return ConversationStateSummary.model_validate(existing_message.conversation)
+
     now = datetime.now(UTC)
     customer = db.scalar(
         select(Customer).where(Customer.whatsapp_phone_e164 == message.from_phone_e164)
@@ -135,9 +141,30 @@ def verify_meta_webhook_subscription(mode: str | None, verify_token: str | None,
     return challenge
 
 
+def verify_meta_webhook_signature(body: bytes, signature_header: str | None) -> None:
+    settings = get_settings()
+    if not settings.whatsapp_meta_app_secret:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Meta webhook app secret is not configured.")
+    if not signature_header:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature is missing.")
+    if not signature_header.startswith("sha256="):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature format is invalid.")
+
+    expected = hmac.new(
+        settings.whatsapp_meta_app_secret.encode("utf-8"),
+        body,
+        hashlib.sha256,
+    ).hexdigest()
+    expected_header = f"sha256={expected}"
+    if not hmac.compare_digest(expected_header, signature_header):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature does not match.")
+
+
 def handle_meta_webhook(db: Session, payload: WhatsAppMetaWebhookPayload) -> WhatsAppWebhookReceiveAck:
     processed_messages = 0
     for message in _iter_meta_inbound_messages(payload):
+        if _get_existing_inbound_provider_message(db, message.provider_message_id):
+            continue
         handle_inbound_whatsapp_message(db, message)
         processed_messages += 1
     return WhatsAppWebhookReceiveAck(provider="meta_cloud_api", processed_messages=processed_messages)
@@ -239,6 +266,18 @@ def _messages_from_meta_change(change: MetaWebhookChange) -> Iterable[WhatsAppIn
             )
         )
     return results
+
+
+def _get_existing_inbound_provider_message(db: Session, provider_message_id: str | None) -> WhatsappMessage | None:
+    if not provider_message_id:
+        return None
+
+    return db.scalar(
+        select(WhatsappMessage).where(
+            WhatsappMessage.provider_message_id == provider_message_id,
+            WhatsappMessage.direction == MessageDirection.INBOUND,
+        )
+    )
 
 
 def _normalize_whatsapp_phone(value: str) -> str:

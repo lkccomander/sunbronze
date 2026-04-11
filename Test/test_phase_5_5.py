@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
+
+from fastapi import HTTPException
+
 from conftest import ROOT, find_python_files, read_text, require_step_ready, route_paths, runtime_api_client, runtime_get, source_contains_any
 
 
@@ -32,8 +37,50 @@ def test_phase_5_5_meta_provider_configuration_exists() -> None:
     assert source_contains_any(combined_text, "whatsapp_meta_verify_token", "whatsapp_meta_access_token")
     assert source_contains_any(combined_text, "whatsapp_meta_phone_number_id", "whatsapp_meta_graph_api_version")
     assert "SUNBRONZE_WHATSAPP_META_VERIFY_TOKEN=" in env_example
+    assert "SUNBRONZE_WHATSAPP_META_APP_SECRET=" in env_example
     assert "SUNBRONZE_WHATSAPP_META_ACCESS_TOKEN=" in env_example
     assert "SUNBRONZE_WHATSAPP_META_PHONE_NUMBER_ID=" in env_example
+
+
+def test_phase_5_5_meta_webhook_signature_verification_exists() -> None:
+    combined_text = "\n".join(read_text(path) for path in find_python_files("backend/src/sunbronze_api"))
+
+    assert "X-Hub-Signature-256" in combined_text
+    assert "verify_meta_webhook_signature" in combined_text
+    assert "hmac.new" in combined_text
+    assert "hashlib.sha256" in combined_text
+    assert "hmac.compare_digest" in combined_text
+
+
+def test_phase_5_5_meta_webhook_signature_validation_runtime(monkeypatch) -> None:
+    from sunbronze_api.core.config import get_settings
+    from sunbronze_api.services.whatsapp import verify_meta_webhook_signature
+
+    body = b'{"object":"whatsapp_business_account","entry":[]}'
+    secret = "test-app-secret"
+    signature = "sha256=" + hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+
+    monkeypatch.setenv("SUNBRONZE_WHATSAPP_META_APP_SECRET", secret)
+    get_settings.cache_clear()
+    try:
+        verify_meta_webhook_signature(body, signature)
+        try:
+            verify_meta_webhook_signature(body, "sha256=invalid")
+        except HTTPException as exc:
+            assert exc.status_code == 403
+        else:
+            raise AssertionError("Invalid Meta webhook signature should be rejected.")
+    finally:
+        get_settings.cache_clear()
+
+
+def test_phase_5_5_meta_webhook_duplicate_delivery_protection_exists() -> None:
+    combined_text = "\n".join(read_text(path) for path in find_python_files("backend/src/sunbronze_api"))
+
+    assert "_get_existing_inbound_provider_message" in combined_text
+    assert "provider_message_id" in combined_text
+    assert "MessageDirection.INBOUND" in combined_text
+    assert "processed_messages += 1" in combined_text
 
 
 def test_phase_5_5_meta_outbound_send_matches_facebook_shape() -> None:

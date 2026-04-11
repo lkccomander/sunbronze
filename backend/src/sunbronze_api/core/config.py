@@ -16,6 +16,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SUNBRONZE_DATABASE_URL", "DATABASE_URL"),
     )
     whatsapp_meta_verify_token: str | None = None
+    whatsapp_meta_app_secret: str | None = None
     whatsapp_meta_access_token: str | None = None
     whatsapp_meta_phone_number_id: str | None = None
     whatsapp_meta_graph_api_version: str = "v23.0"
