@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "Recepción SunBronze",
+    "description": "Interfaz de recepción y administración para agenda y operaciones de WhatsApp de SunBronze."
+  },
+  "common": {
+    "active": "activo",
+    "inactive": "inactivo",
+    "apiOnline": "API en línea",
+    "apiOffline": "API sin conexión",
+    "assignedBarber": "Especialista asignado",
+    "botActive": "Bot activo",
+    "botHandling": "Bot atendiendo",
+    "blockTime": "Bloquear horario",
+    "buffer": "Preparación",
+    "customer": "Cliente",
+    "humanHandoff": "Atención humana",
+    "loading": "Cargando...",
+    "newAppointment": "Nueva cita",
+    "noBody": "Sin contenido",
+    "noPreference": "Sin preferencia",
+    "none": "ninguno",
+    "service": "Servicio",
+    "sessionRequiredTitle": "Sesión requerida",
+    "signInAgain": "Inicia sesión de nuevo para cargar esta sección.",
+    "unassigned": "Sin asignar",
+    "unassignedBarber": "Especialista sin asignar",
+    "unknownCustomer": "Cliente de WhatsApp",
+    "waitingForStaff": "Esperando al equipo",
+    "whatsapp": "WhatsApp",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "shell": {
+    "brand": "SunBronze",
+    "subBrand": "Portal administrativo",
+    "staffName": "Equipo SunBronze",
+    "apiOnlineTitle": "API de la clínica en línea",
+    "apiOfflineTitle": "API de la clínica sin conexión",
+    "subtitle": "Coordina citas, clientes y traspasos de WhatsApp desde un espacio tranquilo.",
+    "logout": "Cerrar sesión",
+    "skip": "Saltar al contenido principal",
+    "language": "Idioma",
+    "nav": {
+      "dashboard": "Panel",
+      "appointments": "Agenda",
+      "customers": "Clientes",
+      "conversations": "Conversaciones",
+      "services": "Servicios",
+      "systemUsers": "Usuarios",
+      "dev": "Dev"
+    }
+  },
+  "dashboard": {
+    "title": "Panel de recepción",
+    "eyebrow": "Recepción",
+    "stats": {
+      "revenue": "Ingresos de hoy",
+      "appointments": "Citas",
+      "inChair": "En cabina",
+      "pendingChats": "Chats pendientes"
+    },
+    "activityTitle": "Actividad reciente",
+    "activitySubtitle": "Momentos de la clínica que necesitan seguimiento tranquilo.",
+    "activities": [
+      ["check_circle", "Tratamiento completado", "Elena Rossi terminó HydraFacial con Dra. Claire.", "hace 2 min"],
+      ["calendar_month", "Nueva cita reservada", "Michael Vance solicitó una consulta inicial.", "hace 18 min"],
+      ["chat", "Traspaso humano en cola", "Un hilo de WhatsApp espera revisión de recepción.", "hace 31 min"],
+      ["payments", "Pago procesado", "La transacción SB-9981 fue confirmada.", "hace 41 min"]
+    ],
+    "staffTitle": "En clínica hoy",
+    "staffSubtitle": "Cobertura del equipo para la recepción.",
+    "staff": [
+      ["CA", "Dra. Claire Aris", "Dermatóloga principal", "En cabina"],
+      ["JV", "Dr. Julian Vance", "Especialista en inyectables", "Disponible"],
+      ["NO", "Enfermera Olivia", "Enfermera estética", "Descanso"]
+    ],
+    "status": {
+      "inChair": "En cabina",
+      "available": "Disponible",
+      "break": "Descanso"
+    }
+  },
+  "appointments": {
+    "title": "Citas",
+    "eyebrow": "Agenda",
+    "dailyView": "Vista diaria",
+    "time": "Hora",
+    "openSchedule": "Agenda abierta",
+    "emptyTitle": "No hay citas programadas hoy",
+    "emptyBody": "No se encontraron reservas entre {start} y {end}. Agrega una nueva cita para poblar este tablero."
+  },
+  "customers": {
+    "title": "Búsqueda de clientes",
+    "eyebrow": "CRM",
+    "panelTitle": "Directorio de clientes",
+    "panelSubtitle": "Resultados activos de búsqueda del equipo desde el backend.",
+    "preferred": "Preferido",
+    "updated": "Actualizado",
+    "emptyTitle": "No se devolvieron clientes",
+    "emptyBody": "El endpoint de búsqueda del equipo responde, pero no devolvió registros de clientes para este entorno."
+  },
+  "conversations": {
+    "title": "Bandeja de conversaciones",
+    "eyebrow": "WhatsApp",
+    "lanesTitle": "Carriles de entrada",
+    "lanesSubtitle": "Estados de conversación ordenados por actividad reciente.",
+    "emptyTitle": "No se devolvieron conversaciones",
+    "emptyBody": "El endpoint de conversaciones del equipo responde, pero no devolvió registros.",
+    "threadTitle": "Hilo reciente",
+    "threadSubtitle": "Conversación más reciente con mensajes guardados de WhatsApp.",
+    "selectedCustomer": "Cliente seleccionado",
+    "noMessageBody": "Sin contenido guardado",
+    "noStoredMessages": "Aún no hay mensajes guardados vinculados a esta conversación.",
+    "noSelectedTitle": "No hay conversación seleccionada",
+    "noSelectedBody": "Cuando existan conversaciones, el hilo más reciente aparecerá aquí para triage."
+  },
+  "services": {
+    "title": "Servicios y equipo",
+    "eyebrow": "Gestión",
+    "serviceMapTitle": "Mapa de servicios",
+    "serviceMapSubtitle": "Catálogo de servicios y requisitos de agenda en vivo.",
+    "headers": {
+      "service": "Servicio",
+      "duration": "Duración",
+      "price": "Precio",
+      "needs": "Necesita",
+      "status": "Estado"
+    },
+    "unpriced": "Sin precio",
+    "barber": "especialista",
+    "resource": "recurso",
+    "emptyServicesTitle": "No se devolvieron servicios",
+    "emptyServicesBody": "El endpoint de servicios responde, pero no devolvió registros.",
+    "staffTitle": "Equipo activo",
+    "staffSubtitle": "Especialistas activos disponibles para agendar servicios.",
+    "noContact": "Sin contacto registrado",
+    "emptyStaffTitle": "No se devolvió equipo activo",
+    "emptyStaffBody": "El endpoint de especialistas no devolvió personal activo para este entorno."
+  },
+  "systemUsers": {
+    "title": "Usuarios del sistema",
+    "eyebrow": "Acceso",
+    "panelTitle": "Directorio de usuarios",
+    "panelSubtitle": "Administra acceso, roles y estado del equipo interno.",
+    "newUser": "Nuevo usuario",
+    "editUser": "Editar usuario",
+    "createUser": "Crear usuario",
+    "saveUser": "Guardar usuario",
+    "cancel": "Cancelar",
+    "deactivate": "Desactivar",
+    "reactivate": "Reactivar",
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "displayName": "Nombre visible",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "password": "Contraseña",
+      "roles": "Roles",
+      "status": "Estado"
+    },
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Administrador",
+      "receptionist": "Recepción",
+      "barber": "Especialista"
+    },
+    "passwordHelp": "Deja la contraseña vacía para conservar la actual al editar.",
+    "emptyTitle": "No hay usuarios del sistema",
+    "emptyBody": "Crea el primer usuario para administrar acceso del equipo interno.",
+    "loadError": "No se pudieron cargar los usuarios del sistema.",
+    "saveError": "No se pudo guardar el usuario.",
+    "deactivateError": "No se pudo cambiar el estado del usuario.",
+    "confirmDeactivate": "¿Desactivar este usuario?",
+    "confirmReactivate": "¿Reactivar este usuario?",
+    "sessionRequired": "Inicia sesión de nuevo para administrar usuarios.",
+    "updated": "Actualizado"
+  },
+  "login": {
+    "title": "Inicio de sesión de recepción.",
+    "eyebrow": "Acceso del equipo",
+    "body": "Inicia sesión con tus credenciales para acceder al panel, citas, clientes y conversaciones.",
+    "email": "Correo",
+    "password": "Contraseña",
+    "submit": "Conectar espacio de recepción",
+    "submitting": "Iniciando sesión...",
+    "loginFailed": "No se pudo iniciar sesión. Verifica tus credenciales.",
+    "networkError": "No se pudo completar el inicio de sesión. Inténtalo de nuevo.",
+    "schedule": "Agenda",
+    "customers": "Clientes",
+    "whatsapp": "WhatsApp"
+  },
+  "dev": {
+    "title": "Reportes de desarrollo",
+    "eyebrow": "Herramientas dev",
+    "stats": {
+      "messages": "Mensajes",
+      "failedSends": "Envíos fallidos",
+      "humanHandoffs": "Traspasos humanos",
+      "pendingReminders": "Recordatorios pendientes"
+    },
+    "emptyTitle": "Autenticación dev o datos API no disponibles",
+    "emptyBody": "Esta página inicia sesión con SUNBRONZE_DEV_EMAIL y SUNBRONZE_DEV_PASSWORD en el servidor, luego lee los endpoints protegidos de WhatsApp. Agrega esos valores en frontend/.env.local si los predeterminados no son válidos para tu entorno.",
+    "messagesTitle": "app.whatsapp_messages",
+    "messagesSubtitle": "Tráfico entrante y saliente más reciente capturado por la plataforma.",
+    "conversationsTitle": "app.conversations",
+    "conversationsSubtitle": "Estados de conversación y transiciones de intención para interacciones de WhatsApp.",
+    "remindersTitle": "app.reminder_jobs",
+    "remindersSubtitle": "Visibilidad de la cola de recordatorios para notificaciones de citas por WhatsApp.",
+    "headers": {
+      "created": "Creado",
+      "direction": "Dirección",
+      "status": "Estado",
+      "kind": "Tipo",
+      "provider": "Proveedor",
+      "body": "Contenido",
+      "chat": "Chat",
+      "state": "Estado",
+      "intent": "Intención",
+      "human": "Humano",
+      "lastInbound": "Último entrante",
+      "lastOutbound": "Último saliente",
+      "scheduled": "Programado",
+      "type": "Tipo",
+      "attempts": "Intentos",
+      "processed": "Procesado",
+      "appointment": "Cita"
+    }
+  }
+}

@@ -1,14 +1,31 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, dictionaries, normalizeLocale, type Locale } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const d = dictionaries[locale];
+
+  useEffect(() => {
+    const cookieLocale = document.cookie
+      .split("; ")
+      .find((item) => item.startsWith(`${LOCALE_COOKIE_NAME}=`))
+      ?.split("=")[1];
+    setLocale(normalizeLocale(cookieLocale));
+  }, []);
+
+  function handleLocaleChange(nextLocale: Locale) {
+    document.cookie = `${LOCALE_COOKIE_NAME}=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
+    setLocale(nextLocale);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,8 +40,8 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error || "Login failed. Please verify your credentials.");
+        await response.json().catch(() => null);
+        setError(d.login.loginFailed);
         setSubmitting(false);
         return;
       }
@@ -32,26 +49,41 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Could not complete sign in. Please try again.");
+      setError(d.login.networkError);
       setSubmitting(false);
     }
   }
 
   return (
-    <main id="main" className="min-h-screen bg-[linear-gradient(180deg,_#f2e7d8_0%,_#ead8c5_100%)] px-6 py-12 text-ink">
+    <main id="main" className="min-h-screen bg-[var(--color-background)] px-6 py-12 text-[var(--color-on-surface)]">
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-[36px] bg-ink p-8 text-sand shadow-panel">
-          <p className="text-xs uppercase tracking-[0.35em] text-sand/60">Staff Access</p>
-          <h1 className="mt-4 font-display text-5xl leading-none">Front desk sign in.</h1>
-          <p className="mt-6 text-base leading-8 text-sand/75">
-            Sign in with your staff credentials to access dashboard, appointments, customer, and conversation pages.
+        <section className="card-muted">
+          <div className="flex items-center justify-between gap-4">
+            <p className="stat-label">{d.login.eyebrow}</p>
+            <select
+              className="rounded-[var(--radius-md)] bg-[var(--color-surface-container)] px-2 py-1 text-sm text-[var(--color-on-surface)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+              value={locale}
+              onChange={(event) => handleLocaleChange(event.target.value as Locale)}
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <h1 className="page-title mt-4 text-[2.75rem]">{d.login.title}</h1>
+          <p className="page-subtitle mt-6 max-w-xl">
+            {d.login.body}
           </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <span className="pill pill-primary">{d.login.schedule}</span>
+            <span className="pill pill-secondary">{d.login.customers}</span>
+            <span className="pill pill-tertiary">{d.login.whatsapp}</span>
+          </div>
         </section>
-        <section className="rounded-[36px] border border-white/60 bg-white/75 p-8 shadow-panel backdrop-blur">
+        <section className="card">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="staff-email" className="text-xs uppercase tracking-[0.3em] text-ink/55">
-                Email
+              <label htmlFor="staff-email" className="stat-label">
+                {d.login.email}
               </label>
               <input
                 id="staff-email"
@@ -59,38 +91,38 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 spellCheck={false}
-                className="mt-2 w-full rounded-2xl border border-ink/10 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className="input-field mt-2"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </div>
             <div>
-              <label htmlFor="staff-password" className="text-xs uppercase tracking-[0.3em] text-ink/55">
-                Password
+              <label htmlFor="staff-password" className="stat-label">
+                {d.login.password}
               </label>
               <input
                 id="staff-password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                className="mt-2 w-full rounded-2xl border border-ink/10 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className="input-field mt-2"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
               />
             </div>
             {error ? (
-              <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+              <p className="pill pill-tertiary w-full justify-center py-3" role="alert">
                 {error}
               </p>
             ) : null}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-full bg-ember px-6 py-3 text-sm font-semibold text-white transition hover:bg-plum disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="btn btn-primary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Signing in..." : "Connect Reception Workspace"}
+              {submitting ? d.login.submitting : d.login.submit}
             </button>
           </form>
         </section>

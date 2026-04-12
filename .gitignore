@@ -34,6 +34,11 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.turbo/
+stitch_frontend/
+stitch_design/
+stitch_frontend/node_modules/
+stitch_frontend/dist/
+*.tsbuildinfo
 
 # Logs and local debugging artifacts
 *.log
@@ -46,8 +51,11 @@ sunbronze_dump.sql
 # Build / packaging
 build/
 dist/
+graphify-out/
+graphify/
 *.egg-info/
 pip-wheel-metadata/
 
 # Local tool files
 .codex
+.pi/

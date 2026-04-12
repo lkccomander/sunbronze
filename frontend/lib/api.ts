@@ -129,6 +129,34 @@ export type StaffConversationSummary = {
   updated_at: string;
 };
 
+export type SystemUserSummary = {
+  id: string;
+  location_id: string | null;
+  barber_id: string | null;
+  email: string;
+  first_name: string;
+  last_name: string | null;
+  display_name: string;
+  phone_e164: string | null;
+  is_active: boolean;
+  roles: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type SystemUserPayload = {
+  location_id?: string | null;
+  barber_id?: string | null;
+  email?: string;
+  password?: string | null;
+  first_name?: string;
+  last_name?: string | null;
+  display_name?: string;
+  phone_e164?: string | null;
+  is_active?: boolean;
+  roles?: string[];
+};
+
 async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 2500): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

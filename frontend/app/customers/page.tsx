@@ -4,16 +4,17 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, Panel } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { type BarberSummary, type StaffCustomerSummary, fetchApiJson, fetchApiJsonWithToken } from "@/lib/api";
+import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
 
-function customerName(customer: StaffCustomerSummary): string {
-  return customer.display_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Customer";
+function customerName(customer: StaffCustomerSummary, fallback: string): string {
+  return customer.display_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || fallback;
 }
 
-function formatTimestamp(value: string): string {
+function formatTimestamp(value: string, locale: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat("en-US", {
+    : new Intl.DateTimeFormat(locale, {
         month: "short",
         day: "numeric",
         hour: "numeric",
@@ -34,11 +35,12 @@ async function loadCustomerData(accessToken: string): Promise<{
 }
 
 export default async function CustomersPage() {
+  const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
   const sessionToken = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
   if (!sessionToken) {
     return (
-      <AppShell title="Customer Search" eyebrow="CRM">
-        <EmptyState title="Session required" body="Sign in again to load customer lookup." />
+      <AppShell title={d.customers.title} eyebrow={d.customers.eyebrow} activeNav="customers">
+        <EmptyState title={d.common.sessionRequiredTitle} body={d.common.signInAgain} />
       </AppShell>
     );
   }
@@ -47,29 +49,29 @@ export default async function CustomersPage() {
   const barberById = new Map(barbers.map((item) => [item.id, item.display_name]));
 
   return (
-    <AppShell title="Customer Search" eyebrow="CRM">
+    <AppShell title={d.customers.title} eyebrow={d.customers.eyebrow} activeNav="customers">
       <div className="grid gap-6">
-        <Panel title="Customer roster" subtitle="Live staff lookup results from the backend.">
+        <Panel title={d.customers.panelTitle} subtitle={d.customers.panelSubtitle}>
           <div className="grid gap-3">
             {customers.map((customer) => (
-              <article key={customer.id} className="rounded-2xl border border-ink/10 bg-sand/35 p-4">
+              <article key={customer.id} className="card-muted">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-display text-2xl leading-none">{customerName(customer)}</h3>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink/55">
-                        {customer.is_active ? "active" : "inactive"}
+                      <h3 className="headline-sm">{customerName(customer, d.common.customer)}</h3>
+                      <span className={`pill ${customer.is_active ? "pill-primary" : "pill-tertiary"}`}>
+                        {customer.is_active ? d.common.active : d.common.inactive}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-ink/70">{customer.whatsapp_phone_e164}</p>
-                    {customer.notes ? <p className="mt-3 max-w-3xl text-sm leading-6 text-ink/68">{customer.notes}</p> : null}
+                    <p className="mt-2 text-sm font-semibold text-[var(--color-on-surface-variant)]">{customer.whatsapp_phone_e164}</p>
+                    {customer.notes ? <p className="body-muted mt-3 max-w-3xl">{customer.notes}</p> : null}
                   </div>
-                  <div className="min-w-48 rounded-2xl border border-ink/8 bg-white px-4 py-3 text-sm text-ink/70">
-                    <p className="text-xs uppercase tracking-[0.24em] text-ink/45">Preferred</p>
-                    <p className="mt-2 font-semibold text-ink">
-                      {customer.preferred_barber_id ? barberById.get(customer.preferred_barber_id) || "Assigned barber" : "No preference"}
+                  <div className="min-w-48 rounded-[var(--radius-lg)] bg-[var(--color-surface-container-lowest)] px-4 py-3 text-sm">
+                    <p className="stat-label">{d.customers.preferred}</p>
+                    <p className="mt-2 font-semibold text-[var(--color-on-surface)]">
+                      {customer.preferred_barber_id ? barberById.get(customer.preferred_barber_id) || d.common.assignedBarber : d.common.noPreference}
                     </p>
-                    <p className="mt-2 text-xs text-ink/50">Updated {formatTimestamp(customer.updated_at)}</p>
+                    <p className="mt-2 text-xs text-[var(--color-outline)]">{d.customers.updated} {formatTimestamp(customer.updated_at, locale)}</p>
                   </div>
                 </div>
               </article>
@@ -77,7 +79,7 @@ export default async function CustomersPage() {
           </div>
         </Panel>
         {customers.length === 0 ? (
-          <EmptyState title="No customers returned" body="The staff lookup endpoint is reachable, but it did not return customer records for this environment." />
+          <EmptyState title={d.customers.emptyTitle} body={d.customers.emptyBody} />
         ) : null}
       </div>
     </AppShell>

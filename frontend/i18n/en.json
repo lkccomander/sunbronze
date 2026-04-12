@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "SunBronze Front Desk",
+    "description": "Receptionist and admin interface for SunBronze scheduling and WhatsApp operations."
+  },
+  "common": {
+    "active": "active",
+    "inactive": "inactive",
+    "apiOnline": "API online",
+    "apiOffline": "API offline",
+    "assignedBarber": "Assigned barber",
+    "botActive": "Bot active",
+    "botHandling": "Bot handling",
+    "blockTime": "Block time",
+    "buffer": "Buffer",
+    "customer": "Customer",
+    "humanHandoff": "Human handoff",
+    "loading": "Loading...",
+    "newAppointment": "New appointment",
+    "noBody": "No body",
+    "noPreference": "No preference",
+    "none": "none",
+    "service": "Service",
+    "sessionRequiredTitle": "Session required",
+    "signInAgain": "Sign in again to load this section.",
+    "unassigned": "Unassigned",
+    "unassignedBarber": "Unassigned barber",
+    "unknownCustomer": "WhatsApp customer",
+    "waitingForStaff": "Waiting for staff",
+    "whatsapp": "WhatsApp",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "shell": {
+    "brand": "SunBronze",
+    "subBrand": "Administrative Portal",
+    "staffName": "SunBronze Staff",
+    "apiOnlineTitle": "Clinic API online",
+    "apiOfflineTitle": "Clinic API offline",
+    "subtitle": "Coordinate appointments, customers, and WhatsApp handoffs from one calm workspace.",
+    "logout": "Log out",
+    "skip": "Skip to main content",
+    "language": "Language",
+    "nav": {
+      "dashboard": "Dashboard",
+      "appointments": "Schedule",
+      "customers": "Clients",
+      "conversations": "Conversations",
+      "services": "Services",
+      "systemUsers": "Users",
+      "dev": "Dev"
+    }
+  },
+  "dashboard": {
+    "title": "Front Desk Dashboard",
+    "eyebrow": "Reception",
+    "stats": {
+      "revenue": "Revenue Today",
+      "appointments": "Appointments",
+      "inChair": "In Chair Now",
+      "pendingChats": "Pending Chats"
+    },
+    "activityTitle": "Recent Activity",
+    "activitySubtitle": "Clinic moments that need calm follow-through.",
+    "activities": [
+      ["check_circle", "Treatment completed", "Elena Rossi finished HydraFacial with Dr. Claire.", "2m ago"],
+      ["calendar_month", "New appointment booked", "Michael Vance requested an initial consultation.", "18m ago"],
+      ["chat", "Human handoff queued", "WhatsApp thread is waiting for front desk review.", "31m ago"],
+      ["payments", "Payment processed", "Transaction SB-9981 was confirmed.", "41m ago"]
+    ],
+    "staffTitle": "In House Today",
+    "staffSubtitle": "Live staff coverage for the reception desk.",
+    "staff": [
+      ["CA", "Dr. Claire Aris", "Lead Dermatologist", "In Chair"],
+      ["JV", "Dr. Julian Vance", "Injectables Specialist", "Available"],
+      ["NO", "Nurse Olivia", "Aesthetic Nurse", "Break"]
+    ],
+    "status": {
+      "inChair": "In Chair",
+      "available": "Available",
+      "break": "Break"
+    }
+  },
+  "appointments": {
+    "title": "Appointments",
+    "eyebrow": "Schedule",
+    "dailyView": "Daily view",
+    "time": "Time",
+    "openSchedule": "Open schedule",
+    "emptyTitle": "No appointments scheduled today",
+    "emptyBody": "No bookings were found between {start} and {end}. Add a new appointment to populate this board."
+  },
+  "customers": {
+    "title": "Customer Search",
+    "eyebrow": "CRM",
+    "panelTitle": "Customer roster",
+    "panelSubtitle": "Live staff lookup results from the backend.",
+    "preferred": "Preferred",
+    "updated": "Updated",
+    "emptyTitle": "No customers returned",
+    "emptyBody": "The staff lookup endpoint is reachable, but it did not return customer records for this environment."
+  },
+  "conversations": {
+    "title": "Conversations Inbox",
+    "eyebrow": "WhatsApp",
+    "lanesTitle": "Inbox lanes",
+    "lanesSubtitle": "Live conversation states ordered by latest activity.",
+    "emptyTitle": "No conversations returned",
+    "emptyBody": "The staff conversations endpoint is reachable, but no conversation records were returned.",
+    "threadTitle": "Latest thread",
+    "threadSubtitle": "Most recent conversation with stored WhatsApp messages.",
+    "selectedCustomer": "Selected customer",
+    "noMessageBody": "No message body stored",
+    "noStoredMessages": "No stored messages are linked to this conversation yet.",
+    "noSelectedTitle": "No conversation selected",
+    "noSelectedBody": "When conversations exist, the most recent thread appears here for triage."
+  },
+  "services": {
+    "title": "Services & Staff",
+    "eyebrow": "Management",
+    "serviceMapTitle": "Service map",
+    "serviceMapSubtitle": "Live service catalog and scheduling requirements.",
+    "headers": {
+      "service": "Service",
+      "duration": "Duration",
+      "price": "Price",
+      "needs": "Needs",
+      "status": "Status"
+    },
+    "unpriced": "Unpriced",
+    "barber": "barber",
+    "resource": "resource",
+    "emptyServicesTitle": "No services returned",
+    "emptyServicesBody": "The services endpoint is reachable, but no service records were returned.",
+    "staffTitle": "Staff roster",
+    "staffSubtitle": "Active barbers available to schedule against services.",
+    "noContact": "No contact recorded",
+    "emptyStaffTitle": "No active staff returned",
+    "emptyStaffBody": "The barber endpoint did not return active staff records for this environment."
+  },
+  "systemUsers": {
+    "title": "System Users",
+    "eyebrow": "Access",
+    "panelTitle": "User directory",
+    "panelSubtitle": "Manage access, roles, and status for the internal team.",
+    "newUser": "New user",
+    "editUser": "Edit user",
+    "createUser": "Create user",
+    "saveUser": "Save user",
+    "cancel": "Cancel",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "displayName": "Display name",
+      "email": "Email",
+      "phone": "Phone",
+      "password": "Password",
+      "roles": "Roles",
+      "status": "Status"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "receptionist": "Receptionist",
+      "barber": "Specialist"
+    },
+    "passwordHelp": "Leave password blank to keep the current one when editing.",
+    "emptyTitle": "No system users",
+    "emptyBody": "Create the first user to manage internal team access.",
+    "loadError": "Could not load system users.",
+    "saveError": "Could not save the user.",
+    "deactivateError": "Could not change the user status.",
+    "confirmDeactivate": "Deactivate this user?",
+    "confirmReactivate": "Reactivate this user?",
+    "sessionRequired": "Sign in again to manage users.",
+    "updated": "Updated"
+  },
+  "login": {
+    "title": "Front desk sign in.",
+    "eyebrow": "Staff Access",
+    "body": "Sign in with your staff credentials to access dashboard, appointments, customer, and conversation pages.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Connect Reception Workspace",
+    "submitting": "Signing in...",
+    "loginFailed": "Login failed. Please verify your credentials.",
+    "networkError": "Could not complete sign in. Please try again.",
+    "schedule": "Schedule",
+    "customers": "Customers",
+    "whatsapp": "WhatsApp"
+  },
+  "dev": {
+    "title": "Developer Reports",
+    "eyebrow": "Dev tools",
+    "stats": {
+      "messages": "Messages",
+      "failedSends": "Failed Sends",
+      "humanHandoffs": "Human Handoffs",
+      "pendingReminders": "Pending Reminders"
+    },
+    "emptyTitle": "Dev auth or API data not available",
+    "emptyBody": "This report page logs in with SUNBRONZE_DEV_EMAIL and SUNBRONZE_DEV_PASSWORD on the server, then reads the protected WhatsApp endpoints. Add those values in frontend/.env.local if the defaults are not valid for your environment.",
+    "messagesTitle": "app.whatsapp_messages",
+    "messagesSubtitle": "Latest inbound and outbound traffic captured by the platform.",
+    "conversationsTitle": "app.conversations",
+    "conversationsSubtitle": "Conversation states and intent transitions for WhatsApp interactions.",
+    "remindersTitle": "app.reminder_jobs",
+    "remindersSubtitle": "Reminder queue visibility for WhatsApp-linked appointment notifications.",
+    "headers": {
+      "created": "Created",
+      "direction": "Direction",
+      "status": "Status",
+      "kind": "Kind",
+      "provider": "Provider",
+      "body": "Body",
+      "chat": "Chat",
+      "state": "State",
+      "intent": "Intent",
+      "human": "Human",
+      "lastInbound": "Last inbound",
+      "lastOutbound": "Last outbound",
+      "scheduled": "Scheduled",
+      "type": "Type",
+      "attempts": "Attempts",
+      "processed": "Processed",
+      "appointment": "Appointment"
+    }
+  }
+}

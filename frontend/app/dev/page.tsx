@@ -6,17 +6,19 @@ import {
   type WhatsAppMessageSummary,
   fetchProtectedApiJson,
 } from "@/lib/api";
+import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
 
-function formatTimestamp(value: string | null): string {
+function formatTimestamp(value: string | null, locale: string, emptyLabel: string): string {
   if (!value) {
-    return "None";
+    return emptyLabel;
   }
 
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(locale);
 }
 
 export default async function DevPage() {
+  const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
   const [messages, conversations, reminders] = await Promise.all([
     fetchProtectedApiJson<WhatsAppMessageSummary[]>("/api/whatsapp/messages"),
     fetchProtectedApiJson<ConversationStateSummary[]>("/api/whatsapp/conversations"),
@@ -30,46 +32,46 @@ export default async function DevPage() {
   const authReady = Boolean(messages && conversations && reminders);
 
   return (
-    <AppShell title="Developer Reports" eyebrow="Dev tools">
+    <AppShell title={d.dev.title} eyebrow={d.dev.eyebrow} activeNav="dev">
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Messages" value={String(totalMessages)} tone="accent" />
-        <StatCard label="Failed Sends" value={String(failedMessages)} />
-        <StatCard label="Human Handoffs" value={String(humanHandoffs)} tone="soft" />
-        <StatCard label="Pending Reminders" value={String(pendingReminders)} />
+        <StatCard label={d.dev.stats.messages} value={String(totalMessages)} tone="accent" />
+        <StatCard label={d.dev.stats.failedSends} value={String(failedMessages)} />
+        <StatCard label={d.dev.stats.humanHandoffs} value={String(humanHandoffs)} tone="soft" />
+        <StatCard label={d.dev.stats.pendingReminders} value={String(pendingReminders)} />
       </div>
 
       {!authReady ? (
         <div className="mt-6">
           <EmptyState
-            title="Dev auth or API data not available"
-            body="This report page logs in with SUNBRONZE_DEV_EMAIL and SUNBRONZE_DEV_PASSWORD on the server, then reads the protected WhatsApp endpoints. Add those values in frontend/.env.local if the defaults are not valid for your environment."
+            title={d.dev.emptyTitle}
+            body={d.dev.emptyBody}
           />
         </div>
       ) : null}
 
       <div className="mt-6 grid gap-6">
-        <Panel title="app.whatsapp_messages" subtitle="Latest inbound and outbound traffic captured by the platform.">
+        <Panel title={d.dev.messagesTitle} subtitle={d.dev.messagesSubtitle}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.25em] text-ink/45">
                 <tr>
-                  <th className="px-3 py-3">Created</th>
-                  <th className="px-3 py-3">Direction</th>
-                  <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Kind</th>
-                  <th className="px-3 py-3">Provider</th>
-                  <th className="px-3 py-3">Body</th>
+                  <th className="px-3 py-3">{d.dev.headers.created}</th>
+                  <th className="px-3 py-3">{d.dev.headers.direction}</th>
+                  <th className="px-3 py-3">{d.dev.headers.status}</th>
+                  <th className="px-3 py-3">{d.dev.headers.kind}</th>
+                  <th className="px-3 py-3">{d.dev.headers.provider}</th>
+                  <th className="px-3 py-3">{d.dev.headers.body}</th>
                 </tr>
               </thead>
               <tbody>
                 {(messages ?? []).slice(0, 20).map((item) => (
                   <tr key={item.id} className="border-t border-ink/8">
-                    <td className="px-3 py-3">{formatTimestamp(item.created_at)}</td>
+                    <td className="px-3 py-3">{formatTimestamp(item.created_at, locale, d.common.none)}</td>
                     <td className="px-3 py-3 uppercase">{item.direction}</td>
                     <td className="px-3 py-3 uppercase">{item.status}</td>
                     <td className="px-3 py-3 uppercase">{item.kind}</td>
                     <td className="px-3 py-3">{item.provider_name}</td>
-                    <td className="max-w-[28rem] break-words px-3 py-3 text-ink/72">{item.body || "No body"}</td>
+                    <td className="max-w-[28rem] break-words px-3 py-3 text-ink/72">{item.body || d.common.noBody}</td>
                   </tr>
                 ))}
               </tbody>
@@ -77,17 +79,17 @@ export default async function DevPage() {
           </div>
         </Panel>
 
-        <Panel title="app.conversations" subtitle="Conversation states and intent transitions for WhatsApp interactions.">
+        <Panel title={d.dev.conversationsTitle} subtitle={d.dev.conversationsSubtitle}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.25em] text-ink/45">
                 <tr>
-                  <th className="px-3 py-3">Chat</th>
-                  <th className="px-3 py-3">State</th>
-                  <th className="px-3 py-3">Intent</th>
-                  <th className="px-3 py-3">Human</th>
-                  <th className="px-3 py-3">Last inbound</th>
-                  <th className="px-3 py-3">Last outbound</th>
+                  <th className="px-3 py-3">{d.dev.headers.chat}</th>
+                  <th className="px-3 py-3">{d.dev.headers.state}</th>
+                  <th className="px-3 py-3">{d.dev.headers.intent}</th>
+                  <th className="px-3 py-3">{d.dev.headers.human}</th>
+                  <th className="px-3 py-3">{d.dev.headers.lastInbound}</th>
+                  <th className="px-3 py-3">{d.dev.headers.lastOutbound}</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,9 +98,9 @@ export default async function DevPage() {
                     <td className="px-3 py-3">{item.whatsapp_chat_id}</td>
                     <td className="px-3 py-3 uppercase">{item.state}</td>
                     <td className="px-3 py-3 uppercase">{item.active_intent}</td>
-                    <td className="px-3 py-3">{item.handed_off_to_human ? "Yes" : "No"}</td>
-                    <td className="px-3 py-3">{formatTimestamp(item.last_inbound_at)}</td>
-                    <td className="px-3 py-3">{formatTimestamp(item.last_outbound_at)}</td>
+                    <td className="px-3 py-3">{item.handed_off_to_human ? d.common.yes : d.common.no}</td>
+                    <td className="px-3 py-3">{formatTimestamp(item.last_inbound_at, locale, d.common.none)}</td>
+                    <td className="px-3 py-3">{formatTimestamp(item.last_outbound_at, locale, d.common.none)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -106,27 +108,27 @@ export default async function DevPage() {
           </div>
         </Panel>
 
-        <Panel title="app.reminder_jobs" subtitle="Reminder queue visibility for WhatsApp-linked appointment notifications.">
+        <Panel title={d.dev.remindersTitle} subtitle={d.dev.remindersSubtitle}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.25em] text-ink/45">
                 <tr>
-                  <th className="px-3 py-3">Scheduled</th>
-                  <th className="px-3 py-3">Type</th>
-                  <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Attempts</th>
-                  <th className="px-3 py-3">Processed</th>
-                  <th className="px-3 py-3">Appointment</th>
+                  <th className="px-3 py-3">{d.dev.headers.scheduled}</th>
+                  <th className="px-3 py-3">{d.dev.headers.type}</th>
+                  <th className="px-3 py-3">{d.dev.headers.status}</th>
+                  <th className="px-3 py-3">{d.dev.headers.attempts}</th>
+                  <th className="px-3 py-3">{d.dev.headers.processed}</th>
+                  <th className="px-3 py-3">{d.dev.headers.appointment}</th>
                 </tr>
               </thead>
               <tbody>
                 {(reminders ?? []).slice(0, 20).map((item) => (
                   <tr key={item.id} className="border-t border-ink/8">
-                    <td className="px-3 py-3">{formatTimestamp(item.scheduled_for)}</td>
+                    <td className="px-3 py-3">{formatTimestamp(item.scheduled_for, locale, d.common.none)}</td>
                     <td className="px-3 py-3">{item.reminder_type}</td>
                     <td className="px-3 py-3 uppercase">{item.status}</td>
                     <td className="px-3 py-3">{item.attempts}</td>
-                    <td className="px-3 py-3">{formatTimestamp(item.processed_at)}</td>
+                    <td className="px-3 py-3">{formatTimestamp(item.processed_at, locale, d.common.none)}</td>
                     <td className="px-3 py-3">{item.appointment_id}</td>
                   </tr>
                 ))}

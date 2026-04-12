@@ -1,32 +1,47 @@
 import { AppShell } from "@/components/app-shell";
 import { Panel, StatCard } from "@/components/ui";
+import { getRequestDictionary } from "@/lib/i18n-server";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { dictionary: d } = await getRequestDictionary();
+
   return (
-    <AppShell title="Front Desk Dashboard" eyebrow="Reception">
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Pending Conversations" value="12" tone="accent" />
-        <StatCard label="Today Appointments" value="27" />
-        <StatCard label="Available Barbers" value="3" tone="soft" />
+    <AppShell title={d.dashboard.title} eyebrow={d.dashboard.eyebrow} activeNav="dashboard">
+      <div className="grid gap-5 md:grid-cols-4">
+        <StatCard label={d.dashboard.stats.revenue} value="$12.4k" tone="accent" />
+        <StatCard label={d.dashboard.stats.appointments} value="27" />
+        <StatCard label={d.dashboard.stats.inChair} value="06" tone="soft" />
+        <StatCard label={d.dashboard.stats.pendingChats} value="12" />
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Panel title="Today at a glance" subtitle="First pass layout for the receptionist workspace.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-3xl bg-sand p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-ink/50">Open needs</p>
-              <p className="mt-3 text-sm leading-7 text-ink/72">Confirm new WhatsApp bookings, review cancellations, and assign human handoff conversations.</p>
-            </div>
-            <div className="rounded-3xl bg-ember/10 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-ink/50">Attention</p>
-              <p className="mt-3 text-sm leading-7 text-ink/72">Surface failed outbound WhatsApp sends and double-booking conflicts once live data wiring is added.</p>
-            </div>
+        <Panel title={d.dashboard.activityTitle} subtitle={d.dashboard.activitySubtitle}>
+          <div className="grid gap-4">
+            {d.dashboard.activities.map(([icon, title, body, time]) => (
+              <article key={title} className="flex items-start gap-4 rounded-[var(--radius-lg)] p-4 transition hover:bg-[var(--color-surface-container-low)]">
+                <span className="material-symbols-outlined icon-lg text-[var(--color-primary)]" aria-hidden="true">
+                  {icon}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--color-on-surface)]">{title}</p>
+                  <p className="body-muted mt-1">{body}</p>
+                </div>
+                <p className="shrink-0 text-xs text-[var(--color-outline)]">{time}</p>
+              </article>
+            ))}
           </div>
         </Panel>
-        <Panel title="Launchpad" subtitle="Direct paths into the first Phase 6 screens.">
-          <div className="space-y-3 text-sm text-ink/72">
-            <p className="rounded-2xl bg-white p-4 shadow-sm">Appointments screen for list + calendar workflow.</p>
-            <p className="rounded-2xl bg-white p-4 shadow-sm">Customer search for quick front-desk lookup.</p>
-            <p className="rounded-2xl bg-white p-4 shadow-sm">Conversations inbox for WhatsApp-driven triage.</p>
+        <Panel title={d.dashboard.staffTitle} subtitle={d.dashboard.staffSubtitle}>
+          <div className="grid gap-3">
+            {d.dashboard.staff.map(([initials, name, role, status]) => (
+              <article key={name} className="flex items-center gap-4 rounded-[var(--radius-lg)] p-3 transition hover:bg-[var(--color-surface-container-low)]">
+                <div className="avatar avatar-sm">{initials}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--color-on-surface)]">{name}</p>
+                  <p className="text-xs text-[var(--color-on-surface-variant)]">{role}</p>
+                </div>
+                <span className={`pill ${status === d.dashboard.status.break ? "pill-tertiary" : status === d.dashboard.status.available ? "pill-secondary" : "pill-primary"}`}>{status}</span>
+              </article>
+            ))}
           </div>
         </Panel>
       </div>

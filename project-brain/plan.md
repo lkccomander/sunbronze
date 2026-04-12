@@ -98,3 +98,81 @@ Build the SunBronze barber scheduling platform in three stages:
 - Reference-data endpoints implemented
 - Appointment module expanded with conflict validation
 - Clear frontend stack decision
+
+## 2026-04-11 19:25:09 -0600 - Phase 7: CRUD de servicios y equipo
+
+Objetivo: convertir la pantalla `Servicios y equipo` del frontend en una sección bilingue completa para crear, leer, actualizar y desactivar/reactivar servicios y miembros del equipo, usando el API del backend como fuente de verdad. Español será el idioma predeterminado y todo texto nuevo debe agregarse a `frontend/i18n/es.json` y `frontend/i18n/en.json`.
+
+1. Backend - contratos CRUD para servicios
+   - Agregar schemas Pydantic para `ServiceCreate`, `ServiceUpdate` y `ServiceDetail`.
+   - Exponer endpoints protegidos para:
+     - `POST /api/services`
+     - `GET /api/services/{service_id}`
+     - `PATCH /api/services/{service_id}`
+     - `DELETE /api/services/{service_id}` como baja lógica usando `is_active=false`.
+   - Validar `code` único, duración mayor a 0, buffers no negativos, moneda ISO de 3 letras y precio opcional no negativo.
+   - Mantener el endpoint actual `GET /api/services` para lectura pública o staff, según la política de auth que se decida.
+
+2. Backend - contratos CRUD para equipo/barberos
+   - Agregar schemas Pydantic para `BarberCreate`, `BarberUpdate` y `BarberDetail`.
+   - Exponer endpoints protegidos para:
+     - `POST /api/barbers`
+     - `GET /api/barbers/{barber_id}`
+     - `PATCH /api/barbers/{barber_id}`
+     - `DELETE /api/barbers/{barber_id}` como baja lógica usando `is_active=false`.
+   - Validar `code` único, `display_name` requerido, email/teléfono opcionales, `location_id` válido si se envía, y `time_zone` con default existente `America/Costa_Rica`.
+   - Definir si el equipo administrado desde esta pantalla representa solo `barbers` o también debe crear/actualizar `system_users`; no mezclar ambos hasta cerrar esa decisión.
+
+3. Backend - asignación servicios ↔ equipo
+   - Agregar endpoints protegidos para administrar `BarberService`:
+     - listar servicios asignados a un barber
+     - asignar uno o más servicios a un barber
+     - actualizar duración/precio custom opcional
+     - desactivar o remover asignación
+   - Asegurar que una asignación no duplique `(barber_id, service_id)`.
+   - Confirmar impacto en disponibilidad/citas cuando se desactiva un servicio o una asignación existente.
+
+4. Backend - permisos y auditoría
+   - Requerir usuario staff autenticado en endpoints de mutación.
+   - Restringir mutaciones a roles `owner`/`admin` si la política actual lo permite; si no, documentar temporalmente `staff` como permiso mínimo.
+   - Registrar acciones administrativas relevantes en audit log: creación, actualización, activación/desactivación y cambios de asignaciones.
+
+5. Tests backend
+   - Agregar pruebas de schemas y validaciones.
+   - Agregar pruebas de endpoints CRUD felices y errores: no autenticado, sin permiso, duplicado, no encontrado, payload inválido.
+   - Agregar prueba runtime/live API si encaja con el patrón existente de fases.
+
+6. Frontend - capa API
+   - Extender `frontend/lib/api.ts` con tipos de payload y helpers para crear/actualizar/desactivar servicios y barbers.
+   - Usar `fetchApiJsonWithToken` para mutaciones protegidas.
+   - Mantener lectura inicial server-side donde convenga, pero usar componentes cliente para formularios, edición inline, confirmaciones y estados optimistas si son seguros.
+
+7. Frontend - UI CRUD en `Servicios y equipo`
+   - Dividir la pantalla en dos secciones claras: catálogo de servicios y equipo activo.
+   - Agregar acciones por servicio: crear, editar, activar/desactivar.
+   - Agregar acciones por miembro del equipo: crear, editar, activar/desactivar.
+   - Agregar manejo de errores y estados de carga en español/inglés.
+   - Agregar confirmación antes de desactivar registros que puedan afectar citas futuras.
+   - Mantener el diseño SkyGlass migrado y evitar introducir una segunda librería visual.
+
+8. Frontend - asignaciones servicios/equipo
+   - Agregar vista o modal para seleccionar qué servicios puede realizar cada miembro del equipo.
+   - Permitir custom duration/custom price solo si el backend ya lo soporta en `BarberService`.
+   - Mostrar claramente cuándo un servicio está activo pero no asignado a nadie.
+
+9. i18n obligatorio
+   - Toda etiqueta, botón, mensaje de error, confirmación, empty state y texto nuevo debe agregarse en `frontend/i18n/es.json` y `frontend/i18n/en.json`.
+   - No dejar strings nuevos hardcodeados en JSX salvo nombres propios, códigos técnicos o datos del backend.
+   - Español sigue siendo default mediante `sunbronze_locale=es` o ausencia de cookie.
+
+10. Verificación
+   - Ejecutar pruebas backend relacionadas.
+   - Ejecutar `npm run build` en `frontend`.
+   - Probar manualmente en el navegador:
+     - crear servicio
+     - editar servicio
+     - desactivar/reactivar servicio
+     - crear miembro del equipo
+     - editar miembro del equipo
+     - desactivar/reactivar miembro del equipo
+     - cambiar idioma ES/EN y confirmar que la pantalla se mantiene traducida.

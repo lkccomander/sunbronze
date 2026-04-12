@@ -1,87 +1,110 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getApiStatus } from "@/lib/api";
+import { getRequestDictionary } from "@/lib/i18n-server";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/appointments", label: "Appointments" },
-  { href: "/customers", label: "Customers" },
-  { href: "/conversations", label: "Conversations" },
-  { href: "/services", label: "Services" },
-  { href: "/dev", label: "Dev" },
-];
+  { href: "/dashboard", icon: "dashboard", key: "dashboard" },
+  { href: "/appointments", icon: "calendar_month", key: "appointments" },
+  { href: "/customers", icon: "group", key: "customers" },
+  { href: "/conversations", icon: "chat", key: "conversations" },
+  { href: "/services", icon: "medical_services", key: "services" },
+  { href: "/system-users", icon: "manage_accounts", key: "systemUsers" },
+  { href: "/dev", icon: "developer_mode", key: "dev" },
+] as const;
+
+export type AppNavKey = (typeof navItems)[number]["key"];
+
+const fallbackActiveByTitle: Record<string, AppNavKey> = {
+  appointments: "appointments",
+  citas: "appointments",
+  customer: "customers",
+  clientes: "customers",
+  conversations: "conversations",
+  conversaciones: "conversations",
+  services: "services",
+  servicios: "services",
+  users: "systemUsers",
+  usuarios: "systemUsers",
+  dashboard: "dashboard",
+  panel: "dashboard",
+};
 
 export async function AppShell({
   title,
   eyebrow,
+  activeNav,
   children,
 }: {
   title: string;
   eyebrow: string;
+  activeNav?: AppNavKey;
   children: ReactNode;
 }) {
-  const apiStatus = await getApiStatus();
+  const [{ locale, dictionary: d }, apiStatus] = await Promise.all([getRequestDictionary(), getApiStatus()]);
+  const normalizedTitle = title.toLowerCase();
+  const inferredActiveNav = activeNav ?? Object.entries(fallbackActiveByTitle).find(([needle]) => normalizedTitle.includes(needle))?.[1];
+  const statusLabel = apiStatus.online ? d.common.apiOnline : apiStatus.label === "API offline" ? d.common.apiOffline : apiStatus.label;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(229,93,45,0.18),_transparent_34%),linear-gradient(180deg,_#f7f1e7_0%,_#f3ead9_46%,_#efe3d0_100%)] text-ink">
-      <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-4 py-6 md:px-6">
-        <aside className="hidden w-72 shrink-0 rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-panel backdrop-blur md:block">
-          <p className="font-sans text-xs uppercase tracking-[0.4em] text-plum/70">SunBronze</p>
-          <h1 className="mt-4 font-display text-3xl leading-none">Reception HQ</h1>
-          <p className="mt-4 text-sm text-ink/70">
-            Staff workspace for schedules, customers, and WhatsApp-driven front desk operations.
-          </p>
-          <nav className="mt-8 space-y-2">
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-name">{d.shell.brand}</div>
+          <div className="sidebar-brand-sub">{d.shell.subBrand}</div>
+        </div>
+
+        <nav className="sidebar-nav" aria-label={d.shell.nav.dashboard}>
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="block rounded-2xl px-4 py-3 text-sm font-medium text-ink/78 transition hover:bg-ink hover:text-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className={`nav-item${item.key === inferredActiveNav ? " active" : ""}`}
               >
-                {item.label}
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {item.icon}
+                </span>
+                {d.shell.nav[item.key]}
               </Link>
             ))}
           </nav>
-          <div className="mt-8 rounded-3xl bg-ink px-5 py-6 text-sand">
-            <p className="text-xs uppercase tracking-[0.35em] text-sand/60">Live API</p>
-            <p className="mt-3 text-sm leading-6 text-sand/80">
-              Connect this UI to Railway with <code className="rounded bg-white/10 px-1.5 py-0.5">NEXT_PUBLIC_API_BASE_URL</code>.
-            </p>
+
+        <div className="sidebar-user">
+          <div className="user-avatar">SB</div>
+          <div className="min-w-0 flex-1">
+            <div className="user-name">{d.shell.staffName}</div>
+            <div className="user-role">{statusLabel}</div>
           </div>
-        </aside>
-        <main
-          id="main"
-          className="flex-1 rounded-[32px] border border-white/60 bg-white/75 p-5 shadow-panel backdrop-blur md:p-8"
-        >
-          <div className="flex flex-col gap-3 border-b border-ink/10 pb-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ember">{eyebrow}</p>
-              <h2 className="mt-3 font-display text-4xl leading-none md:text-5xl">{title}</h2>
+          <div className="status-dot" title={d.shell[apiStatus.online ? "apiOnlineTitle" : "apiOfflineTitle"]} />
+        </div>
+      </aside>
+
+      <main id="main" className="main-content">
+        <div className="page-header">
+          <div>
+            <div className="flex items-center gap-2 text-[0.8125rem] font-semibold uppercase tracking-normal text-[var(--color-on-surface-variant)]">
+              <span className="material-symbols-outlined icon-sm" aria-hidden="true">
+                wb_sunny
+              </span>
+              <span>{eyebrow}</span>
             </div>
-            <div className="flex items-center gap-3 self-start md:self-auto">
-              <div className="flex items-center gap-3 rounded-2xl bg-sand px-4 py-3 text-sm text-ink/70">
-                <span
-                  className={`inline-block h-3 w-3 rounded-full ${
-                    apiStatus.online ? "bg-green-500 shadow-[0_0_14px_rgba(34,197,94,0.55)]" : "bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
-                  }`}
-                  aria-hidden="true"
-                />
-                <span>{apiStatus.label}</span>
-              </div>
-              <form action="/api/auth/logout" method="POST">
-                <button
-                  type="submit"
-                  className="rounded-full border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-                >
-                  Log out
-                </button>
-              </form>
-            </div>
+            <h1 className="page-title mt-4">{title}</h1>
+            <p className="page-subtitle">{d.shell.subtitle}</p>
           </div>
-          <div className="mt-6">{children}</div>
-        </main>
-      </div>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <LocaleSwitcher locale={locale} label={d.shell.language} />
+            <span className={`pill ${apiStatus.online ? "pill-primary" : "pill-tertiary"}`}>{statusLabel}</span>
+            <form action="/api/auth/logout" method="POST">
+              <button type="submit" className="btn btn-ghost btn-sm">
+                {d.shell.logout}
+              </button>
+            </form>
+          </div>
+        </div>
+        <div className="animate-in">{children}</div>
+      </main>
     </div>
   );
 }
