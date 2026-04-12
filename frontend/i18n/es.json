@@ -228,7 +228,10 @@
     "networkError": "No se pudo completar el inicio de sesión. Inténtalo de nuevo.",
     "schedule": "Agenda",
     "customers": "Clientes",
-    "whatsapp": "WhatsApp"
+    "whatsapp": "WhatsApp",
+    "legal": "Enlaces legales",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Servicio"
   },
   "dev": {
     "title": "Reportes de desarrollo",

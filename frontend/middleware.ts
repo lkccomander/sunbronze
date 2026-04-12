@@ -4,7 +4,15 @@ import type { NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { getPublicUrl } from "@/lib/url";
 
-const PUBLIC_PATHS = new Set(["/login", "/api/auth/login", "/api/auth/logout"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/privacy",
+  "/privacy-en",
+  "/terms-of-service",
+  "/terms-of-service-en",
+  "/api/auth/login",
+  "/api/auth/logout",
+]);
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) {

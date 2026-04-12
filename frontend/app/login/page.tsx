@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -25,6 +26,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const d = dictionaries[locale];
+  const privacyHref = locale === "en" ? "/privacy-en" : "/privacy";
+  const termsHref = locale === "en" ? "/terms-of-service-en" : "/terms-of-service";
 
   useEffect(() => {
     const cookieLocale = document.cookie
@@ -140,6 +143,10 @@ export default function LoginPage() {
               {submitting ? d.login.submitting : d.login.submit}
             </button>
           </form>
+          <nav className="login-legal-links" aria-label={d.login.legal}>
+            <Link href={privacyHref}>{d.login.privacy}</Link>
+            <Link href={termsHref}>{d.login.terms}</Link>
+          </nav>
         </section>
       </div>
     </main>

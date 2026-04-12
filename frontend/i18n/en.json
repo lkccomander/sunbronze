@@ -228,7 +228,10 @@
     "networkError": "Could not complete sign in. Please try again.",
     "schedule": "Schedule",
     "customers": "Customers",
-    "whatsapp": "WhatsApp"
+    "whatsapp": "WhatsApp",
+    "legal": "Legal links",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "dev": {
     "title": "Developer Reports",

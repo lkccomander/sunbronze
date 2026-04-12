@@ -1,0 +1,273 @@
+{
+  "termsOfService": {
+    "en": {
+      "title": "Terms of Service",
+      "brand": "Sun Bronze",
+      "lastUpdated": "April 12, 2026",
+      "effectiveStatement": "By using our WhatsApp service, you agree to these Terms of Service.",
+      "sections": [
+        {
+          "heading": "Introduction",
+          "body": ["Welcome to Sun Bronze. By using our WhatsApp chatbot and related services, you agree to these Terms of Service."]
+        },
+        {
+          "heading": "Services",
+          "body": ["Sun Bronze provides appointment scheduling, customer support, and promotional information via WhatsApp."]
+        },
+        {
+          "heading": "User Responsibilities",
+          "body": ["You agree to:"],
+          "items": [
+            "Provide accurate information when interacting with the chatbot",
+            "Use the service only for legitimate purposes",
+            "Not misuse, disrupt, or attempt to harm the system"
+          ]
+        },
+        {
+          "heading": "Appointments",
+          "items": [
+            "Appointments requested via WhatsApp are subject to availability",
+            "Sun Bronze may confirm, reschedule, or cancel bookings if necessary"
+          ]
+        },
+        {
+          "heading": "Messaging and Communication",
+          "body": ["By contacting us through WhatsApp:"],
+          "items": [
+            "You consent to receive messages related to your inquiries, bookings, and services",
+            "Message frequency may vary"
+          ]
+        },
+        {
+          "heading": "Privacy",
+          "body": [
+            "We collect and process personal data, such as phone number and name, only to provide our services.",
+            "Please refer to our Privacy Policy for more details."
+          ]
+        },
+        {
+          "heading": "Limitation of Liability",
+          "body": ["Sun Bronze is not responsible for:"],
+          "items": [
+            "Delays or failures caused by third-party services, including WhatsApp",
+            "Any indirect or incidental damages"
+          ]
+        },
+        {
+          "heading": "Changes to Terms",
+          "body": ["We may update these Terms at any time. Continued use of the service means you accept the updated Terms."]
+        },
+        {
+          "heading": "Contact",
+          "body": ["If you have any questions, contact us at:"],
+          "email": "andresch@gmail.com"
+        }
+      ]
+    },
+    "es": {
+      "title": "Términos de Servicio",
+      "brand": "Sun Bronze",
+      "lastUpdated": "12 de abril de 2026",
+      "effectiveStatement": "Al usar el servicio, aceptas estos términos.",
+      "sections": [
+        {
+          "heading": "Introducción",
+          "body": ["Bienvenido a Sun Bronze. Al utilizar nuestro chatbot de WhatsApp y servicios relacionados, aceptas estos Términos de Servicio."]
+        },
+        {
+          "heading": "Servicios",
+          "body": ["Sun Bronze ofrece agendamiento de citas, atención al cliente e información promocional a través de WhatsApp."]
+        },
+        {
+          "heading": "Responsabilidades del Usuario",
+          "body": ["Aceptas:"],
+          "items": [
+            "Proporcionar información veraz",
+            "Usar el servicio solo con fines legítimos",
+            "No interferir ni dañar el sistema"
+          ]
+        },
+        {
+          "heading": "Citas",
+          "items": [
+            "Las citas están sujetas a disponibilidad",
+            "Sun Bronze puede confirmar, reprogramar o cancelar reservas"
+          ]
+        },
+        {
+          "heading": "Mensajería",
+          "body": ["Al contactarnos por WhatsApp:"],
+          "items": [
+            "Aceptas recibir mensajes relacionados con tus solicitudes",
+            "La frecuencia puede variar"
+          ]
+        },
+        {
+          "heading": "Privacidad",
+          "body": [
+            "Procesamos datos personales, como nombre y teléfono, solo para brindar el servicio.",
+            "Consulta nuestra Política de Privacidad."
+          ]
+        },
+        {
+          "heading": "Limitación de Responsabilidad",
+          "body": ["Sun Bronze no es responsable por:"],
+          "items": [
+            "Fallos de servicios de terceros, como WhatsApp",
+            "Daños indirectos"
+          ]
+        },
+        {
+          "heading": "Cambios",
+          "body": ["Podemos actualizar estos términos en cualquier momento."]
+        },
+        {
+          "heading": "Contacto",
+          "email": "andresch@gmail.com"
+        }
+      ]
+    }
+  },
+  "privacyPolicy": {
+    "en": {
+      "title": "Privacy Policy",
+      "brand": "Sun Bronze",
+      "lastUpdated": "April 12, 2026",
+      "effectiveStatement": "By using our service, you agree to this policy.",
+      "sections": [
+        {
+          "heading": "Introduction",
+          "body": ["Sun Bronze respects your privacy. This policy explains how we collect, use, and protect your information when using our WhatsApp service."]
+        },
+        {
+          "heading": "Information We Collect",
+          "body": ["We may collect:"],
+          "items": [
+            "Phone number",
+            "Name or alias",
+            "Messages sent",
+            "Appointment details, including date, time, and service"
+          ]
+        },
+        {
+          "heading": "Use of Information",
+          "body": ["We use your data to:"],
+          "items": [
+            "Manage appointments",
+            "Respond to inquiries",
+            "Send confirmations and reminders",
+            "Improve our services"
+          ]
+        },
+        {
+          "heading": "Data Sharing",
+          "body": ["We do not sell your data. We may share it:"],
+          "items": [
+            "When necessary to provide the service",
+            "With technology providers, such as WhatsApp or Meta"
+          ]
+        },
+        {
+          "heading": "Data Retention",
+          "body": ["We retain data only as long as necessary for service or legal obligations."]
+        },
+        {
+          "heading": "Security",
+          "body": ["We implement reasonable measures to protect your data, but no system is fully secure."]
+        },
+        {
+          "heading": "User Rights",
+          "body": ["You may request:"],
+          "items": [
+            "Access to your data",
+            "Correction or deletion",
+            "Opt-out of communications"
+          ]
+        },
+        {
+          "heading": "Data Deletion",
+          "body": ["To request data deletion, contact:"],
+          "email": "andresch@gmail.com"
+        },
+        {
+          "heading": "Changes",
+          "body": ["We may update this policy at any time."]
+        },
+        {
+          "heading": "Contact",
+          "email": "andresch@gmail.com"
+        }
+      ]
+    },
+    "es": {
+      "title": "Política de Privacidad",
+      "brand": "Sun Bronze",
+      "lastUpdated": "12 de abril de 2026",
+      "effectiveStatement": "Al usar nuestro servicio, aceptas esta política.",
+      "sections": [
+        {
+          "heading": "Introducción",
+          "body": ["Sun Bronze respeta tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tu información al usar nuestro servicio de WhatsApp."]
+        },
+        {
+          "heading": "Información que recopilamos",
+          "body": ["Podemos recopilar:"],
+          "items": [
+            "Número de teléfono",
+            "Nombre o alias",
+            "Mensajes enviados",
+            "Información de citas, como fecha, hora y servicio"
+          ]
+        },
+        {
+          "heading": "Uso de la información",
+          "body": ["Usamos tus datos para:"],
+          "items": [
+            "Gestionar citas",
+            "Responder consultas",
+            "Enviar confirmaciones y recordatorios",
+            "Mejorar nuestros servicios"
+          ]
+        },
+        {
+          "heading": "Compartir información",
+          "body": ["No vendemos ni compartimos tus datos, excepto:"],
+          "items": [
+            "Cuando es necesario para prestar el servicio",
+            "Con proveedores tecnológicos, como WhatsApp o Meta"
+          ]
+        },
+        {
+          "heading": "Retención de datos",
+          "body": ["Guardamos la información solo el tiempo necesario para brindar el servicio o cumplir obligaciones legales."]
+        },
+        {
+          "heading": "Seguridad",
+          "body": ["Implementamos medidas razonables para proteger tu información, pero ningún sistema es 100% seguro."]
+        },
+        {
+          "heading": "Derechos del usuario",
+          "body": ["Puedes solicitar:"],
+          "items": [
+            "Acceso a tus datos",
+            "Corrección o eliminación",
+            "Cancelación de comunicaciones"
+          ]
+        },
+        {
+          "heading": "Eliminación de datos",
+          "body": ["Para solicitar la eliminación de tus datos, contáctanos en:"],
+          "email": "andresch@gmail.com"
+        },
+        {
+          "heading": "Cambios a esta política",
+          "body": ["Podemos actualizar esta política en cualquier momento."]
+        },
+        {
+          "heading": "Contacto",
+          "email": "andresch@gmail.com"
+        }
+      ]
+    }
+  }
+}
