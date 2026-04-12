@@ -7,6 +7,16 @@ import { FormEvent, useEffect, useState } from "react";
 import logoImage from "@/app/assets/logo.jpg";
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, dictionaries, normalizeLocale, type Locale } from "@/lib/i18n";
 
+function getSafeNextPath(): string {
+  const nextPath = new URLSearchParams(window.location.search).get("next");
+
+  if (!nextPath?.startsWith("/") || nextPath.startsWith("//")) {
+    return "/dashboard";
+  }
+
+  return nextPath;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
@@ -48,7 +58,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(getSafeNextPath());
       router.refresh();
     } catch {
       setError(d.login.networkError);

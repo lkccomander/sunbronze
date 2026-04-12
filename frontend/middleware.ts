@@ -28,6 +28,9 @@ export function middleware(request: NextRequest) {
 
   if (isPublicPath(pathname)) {
     if (pathname === "/login" && hasSession) {
+      if (request.nextUrl.searchParams.has("next")) {
+        return NextResponse.next();
+      }
       return NextResponse.redirect(getPublicUrl(request, "/dashboard"));
     }
     return NextResponse.next();

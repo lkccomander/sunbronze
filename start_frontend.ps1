@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $frontendRoot = Join-Path $projectRoot "frontend"
 $envFile = Join-Path $frontendRoot ".env.local"
-$apiBaseUrl = "https://sunbronze-production.up.railway.app"
+$apiBaseUrl = "http://127.0.0.1:8000"
 
 Set-Location $frontendRoot
 
