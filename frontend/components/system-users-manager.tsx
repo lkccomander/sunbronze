@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useTransition } from "react";
 
+import { InitialsAvatar } from "@/components/ui";
 import type { Dictionary } from "@/lib/i18n";
 import type { SystemUserPayload, SystemUserSummary } from "@/lib/api";
 
@@ -179,8 +180,13 @@ export function SystemUsersManager({
               {users.map((user) => (
                 <tr key={user.id}>
                   <td>
-                    <p className="font-semibold text-[var(--color-on-surface)]">{user.display_name}</p>
-                    <p className="text-xs text-[var(--color-outline)]">{copy.updated} {new Date(user.updated_at).toLocaleDateString()}</p>
+                    <div className="flex min-w-56 items-center gap-3">
+                      <InitialsAvatar name={user.display_name} size="sm" />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--color-on-surface)]">{user.display_name}</p>
+                        <p className="text-xs text-[var(--color-outline)]">{copy.updated} {new Date(user.updated_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
                   </td>
                   <td>{user.email}</td>
                   <td>

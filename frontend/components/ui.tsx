@@ -1,5 +1,43 @@
 import type { ReactNode } from "react";
 
+function initialsFromName(name: string, fallback: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+
+  return (letters || fallback).slice(0, 2).toUpperCase();
+}
+
+function avatarToneFromName(name: string): string {
+  const source = name.trim() || "SunBronze";
+  let total = 0;
+  for (const char of source) {
+    total += char.charCodeAt(0);
+  }
+
+  return `avatar-tone-${(total % 5) + 1}`;
+}
+
+export function InitialsAvatar({
+  name,
+  fallback = "SB",
+  size = "md",
+}: {
+  name: string;
+  fallback?: string;
+  size?: "sm" | "md";
+}) {
+  return (
+    <span className={`avatar initials-avatar ${size === "sm" ? "avatar-sm" : "avatar-md"} ${avatarToneFromName(name)}`} aria-hidden="true">
+      {initialsFromName(name, fallback)}
+    </span>
+  );
+}
+
 export function StatCard({
   label,
   value,

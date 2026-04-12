@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, Panel } from "@/components/ui";
+import { EmptyState, InitialsAvatar, Panel } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { type BarberSummary, type StaffCustomerSummary, fetchApiJson, fetchApiJsonWithToken } from "@/lib/api";
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
@@ -56,15 +56,18 @@ export default async function CustomersPage() {
             {customers.map((customer) => (
               <article key={customer.id} className="card-muted">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="headline-sm">{customerName(customer, d.common.customer)}</h3>
-                      <span className={`pill ${customer.is_active ? "pill-primary" : "pill-tertiary"}`}>
-                        {customer.is_active ? d.common.active : d.common.inactive}
-                      </span>
+                  <div className="flex min-w-0 items-start gap-4">
+                    <InitialsAvatar name={customerName(customer, d.common.customer)} />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="headline-sm">{customerName(customer, d.common.customer)}</h3>
+                        <span className={`pill ${customer.is_active ? "pill-primary" : "pill-tertiary"}`}>
+                          {customer.is_active ? d.common.active : d.common.inactive}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-[var(--color-on-surface-variant)]">{customer.whatsapp_phone_e164}</p>
+                      {customer.notes ? <p className="body-muted mt-3 max-w-3xl">{customer.notes}</p> : null}
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-[var(--color-on-surface-variant)]">{customer.whatsapp_phone_e164}</p>
-                    {customer.notes ? <p className="body-muted mt-3 max-w-3xl">{customer.notes}</p> : null}
                   </div>
                   <div className="min-w-48 rounded-[var(--radius-lg)] bg-[var(--color-surface-container-lowest)] px-4 py-3 text-sm">
                     <p className="stat-label">{d.customers.preferred}</p>

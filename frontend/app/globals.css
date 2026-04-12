@@ -208,6 +208,42 @@ body {
   font-size: 0.875rem;
 }
 
+.initials-avatar {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  text-transform: uppercase;
+}
+
+.avatar-md {
+  height: 56px;
+  width: 56px;
+  font-size: 1rem;
+}
+
+.avatar-tone-1 {
+  background: #303030;
+  color: #ffd34d;
+}
+
+.avatar-tone-2 {
+  background: #123f47;
+  color: #2ee0af;
+}
+
+.avatar-tone-3 {
+  background: #18213c;
+  color: #f4f7ff;
+}
+
+.avatar-tone-4 {
+  background: #352944;
+  color: #ff6680;
+}
+
+.avatar-tone-5 {
+  background: #103f5d;
+  color: #28b9d6;
+}
+
 .user-name {
   color: var(--color-on-surface);
   font-size: 0.875rem;
