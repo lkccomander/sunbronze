@@ -1,5 +1,15 @@
 const FALLBACK_API_BASE_URL = "http://127.0.0.1:8000";
 
+export class ApiRequestError extends Error {
+  status: number;
+
+  constructor(path: string, status: number) {
+    super(`API request failed for ${path}: ${status}`);
+    this.name = "ApiRequestError";
+    this.status = status;
+  }
+}
+
 export type ApiStatus = {
   online: boolean;
   label: string;
@@ -190,7 +200,7 @@ export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed for ${path}: ${response.status}`);
+    throw new ApiRequestError(path, response.status);
   }
 
   return response.json() as Promise<T>;
