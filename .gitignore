@@ -59,3 +59,4 @@ pip-wheel-metadata/
 # Local tool files
 .codex
 .pi/
+project-brain/

@@ -1,7 +1,0 @@
-You tube skill
-
-https://github.com/leifermendez/bbc-skill-mcp/blob/master/SKILL.md
-
-
-#local API
-http://127.0.0.1:8000/docs#
