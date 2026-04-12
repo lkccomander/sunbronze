@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from sunbronze_api.core.config import get_settings
 from sunbronze_api.models.entities import Appointment, Conversation, Customer, ReminderJob, WhatsappMessage
-from sunbronze_api.models.enums import ConversationIntent, ConversationState, MessageDirection, MessageKind, MessageStatus, ReminderStatus
+from sunbronze_api.models.enums import MessageDirection, MessageKind, MessageStatus, ReminderStatus
 from sunbronze_api.schemas.whatsapp import (
     ConversationStateSummary,
     MetaWebhookChange,
@@ -22,6 +22,7 @@ from sunbronze_api.schemas.whatsapp import (
     WhatsAppMessageSummary,
     WhatsAppWebhookReceiveAck,
 )
+from sunbronze_api.services.whatsapp_booking import advance_whatsapp_booking_flow
 
 
 def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage) -> ConversationStateSummary:
@@ -54,7 +55,7 @@ def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage
         db.flush()
 
     conversation.last_inbound_at = message.received_at or now
-    _apply_conversation_state(conversation, message.body)
+    reply_body = advance_whatsapp_booking_flow(db, conversation, customer, message.body, now)
 
     inbound = WhatsappMessage(
         conversation_id=conversation.id,
@@ -74,7 +75,7 @@ def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage
         direction=MessageDirection.OUTBOUND,
         status=MessageStatus.QUEUED,
         kind=MessageKind.SYSTEM,
-        body=_build_auto_reply(conversation),
+        body=reply_body,
         created_at=now,
     )
     db.add(outbound)
@@ -189,53 +190,6 @@ def enqueue_default_reminder_jobs(db: Session, appointment: Appointment) -> None
                 payload={"source": "whatsapp"},
             )
         )
-
-
-def _apply_conversation_state(conversation: Conversation, message_body: str) -> None:
-    lowered = message_body.lower()
-
-    if "human" in lowered or "agent" in lowered or "handoff" in lowered:
-        conversation.handed_off_to_human = True
-        conversation.active_intent = ConversationIntent.HUMAN_HELP
-        conversation.state = ConversationState.WAITING_HUMAN
-        return
-
-    if "faq" in lowered or "hours" in lowered or "service" in lowered:
-        conversation.active_intent = ConversationIntent.FAQ
-        conversation.state = ConversationState.FAQ
-        return
-
-    if "cancel" in lowered or "cancellation" in lowered:
-        conversation.active_intent = ConversationIntent.CANCEL
-        conversation.state = ConversationState.CANCEL_LOOKUP
-        return
-
-    if "reschedule" in lowered or "move" in lowered or "change" in lowered:
-        conversation.active_intent = ConversationIntent.RESCHEDULE
-        conversation.state = ConversationState.RESCHEDULE_LOOKUP
-        return
-
-    if "book" in lowered or "booking" in lowered or "corte" in lowered or "hair" in lowered:
-        conversation.active_intent = ConversationIntent.BOOK
-        conversation.state = ConversationState.CHOOSE_SERVICE
-        return
-
-    conversation.active_intent = ConversationIntent.UNKNOWN
-    conversation.state = ConversationState.START
-
-
-def _build_auto_reply(conversation: Conversation) -> str:
-    if conversation.handed_off_to_human:
-        return "Human handoff requested. A receptionist will follow up."
-    if conversation.state == ConversationState.FAQ:
-        return "FAQ flow started. Please choose a topic like hours, services, or location."
-    if conversation.state == ConversationState.CANCEL_LOOKUP:
-        return "Cancellation flow started. Please share your booking reference."
-    if conversation.state == ConversationState.RESCHEDULE_LOOKUP:
-        return "Rescheduling flow started. Please share your booking reference."
-    if conversation.state == ConversationState.CHOOSE_SERVICE:
-        return "Booking flow started. Which service would you like to schedule?"
-    return "Message received. How can we help you today?"
 
 
 def _iter_meta_inbound_messages(payload: WhatsAppMetaWebhookPayload) -> Iterable[WhatsAppInboundMessage]:
