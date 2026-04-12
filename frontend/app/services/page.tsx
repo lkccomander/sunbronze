@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, Panel } from "@/components/ui";
-import { type BarberSummary, type ServiceSummary, fetchApiJson } from "@/lib/api";
+import { SpecialistsManager } from "@/components/specialists-manager";
+import { type BarberSummary, type BarberWorkingHoursSummary, type ServiceSummary, fetchApiJson } from "@/lib/api";
 import { getRequestDictionary } from "@/lib/i18n-server";
 
 function formatPrice(service: ServiceSummary, unpriced: string): string {
@@ -17,19 +18,27 @@ function formatPrice(service: ServiceSummary, unpriced: string): string {
 async function loadServiceData(): Promise<{
   services: ServiceSummary[];
   barbers: BarberSummary[];
+  workingHours: Record<string, BarberWorkingHoursSummary[]>;
 }> {
   const [services, barbers] = await Promise.all([
     fetchApiJson<ServiceSummary[]>("/api/services?limit=200").catch(() => []),
-    fetchApiJson<BarberSummary[]>("/api/barbers?is_active=true&limit=200").catch(() => []),
+    fetchApiJson<BarberSummary[]>("/api/barbers?limit=200").catch(() => []),
   ]);
 
-  return { services, barbers };
+  const hoursLists = await Promise.all(
+    barbers.map((barber) => fetchApiJson<BarberWorkingHoursSummary[]>(`/api/barbers/${barber.id}/working-hours`).catch(() => [])),
+  );
+  const workingHours = barbers.reduce<Record<string, BarberWorkingHoursSummary[]>>((accumulator, barber, index) => {
+    accumulator[barber.id] = hoursLists[index] ?? [];
+    return accumulator;
+  }, {});
+
+  return { services, barbers, workingHours };
 }
 
 export default async function ServicesPage() {
   const { dictionary: d } = await getRequestDictionary();
-  const { services, barbers } = await loadServiceData();
-  const activeBarbers = barbers.filter((item) => item.is_active);
+  const { services, barbers, workingHours } = await loadServiceData();
 
   return (
     <AppShell title={d.services.title} eyebrow={d.services.eyebrow} activeNav="services">
@@ -81,18 +90,7 @@ export default async function ServicesPage() {
             </div>
           ) : null}
         </Panel>
-        <Panel title={d.services.staffTitle} subtitle={d.services.staffSubtitle}>
-          <div className="grid gap-3 md:grid-cols-2">
-            {activeBarbers.map((barber) => (
-              <article key={barber.id} className="card-muted">
-                <p className="headline-sm">{barber.display_name}</p>
-                <p className="body-muted mt-2">{barber.email || barber.phone_e164 || d.services.noContact}</p>
-                <p className="stat-label mt-3">{barber.time_zone}</p>
-              </article>
-            ))}
-          </div>
-          {activeBarbers.length === 0 ? <EmptyState title={d.services.emptyStaffTitle} body={d.services.emptyStaffBody} /> : null}
-        </Panel>
+        <SpecialistsManager initialBarbers={barbers} initialHours={workingHours} copy={d.services} common={d.common} />
       </div>
     </AppShell>
   );

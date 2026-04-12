@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
 import logoImage from "@/app/assets/logo.jpg";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { getApiStatus } from "@/lib/api";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import { fetchApiJsonWithToken, getApiStatus, type AuthenticatedUser } from "@/lib/api";
 import { getRequestDictionary } from "@/lib/i18n-server";
 
 const navItems = [
@@ -34,6 +37,35 @@ const fallbackActiveByTitle: Record<string, AppNavKey> = {
   panel: "dashboard",
 };
 
+function initialsFromName(name: string | null | undefined): string {
+  return (name || "SunBronze")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "SB";
+}
+
+function roleLabel(user: AuthenticatedUser | null, fallback: string): string {
+  return user?.roles?.length ? user.roles.join(", ") : fallback;
+}
+
+async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+  const accessToken = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
+  if (!accessToken) {
+    return null;
+  }
+
+  try {
+    return await fetchApiJsonWithToken<AuthenticatedUser>("/api/auth/me", accessToken);
+  } catch {
+    return null;
+  }
+}
+
 export async function AppShell({
   title,
   eyebrow,
@@ -45,10 +77,13 @@ export async function AppShell({
   activeNav?: AppNavKey;
   children: ReactNode;
 }) {
-  const [{ locale, dictionary: d }, apiStatus] = await Promise.all([getRequestDictionary(), getApiStatus()]);
+  const [{ locale, dictionary: d }, apiStatus, currentUser] = await Promise.all([getRequestDictionary(), getApiStatus(), getCurrentUser()]);
   const normalizedTitle = title.toLowerCase();
   const inferredActiveNav = activeNav ?? Object.entries(fallbackActiveByTitle).find(([needle]) => normalizedTitle.includes(needle))?.[1];
   const statusLabel = apiStatus.online ? d.common.apiOnline : apiStatus.label === "API offline" ? d.common.apiOffline : apiStatus.label;
+  const userName = currentUser?.display_name || d.shell.noUser || "SunBronze";
+  const userRole = roleLabel(currentUser, statusLabel);
+  const themeLabels = d.shell.theme || { dark: "Dark", darkGreen: "Dark green", light: "Light" };
 
   return (
     <div className="app-layout">
@@ -62,25 +97,25 @@ export async function AppShell({
         </div>
 
         <nav className="sidebar-nav" aria-label={d.shell.nav.dashboard}>
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-item${item.key === inferredActiveNav ? " active" : ""}`}
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {item.icon}
-                </span>
-                {d.shell.nav[item.key]}
-              </Link>
-            ))}
-          </nav>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-item${item.key === inferredActiveNav ? " active" : ""}`}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {item.icon}
+              </span>
+              {d.shell.nav[item.key]}
+            </Link>
+          ))}
+        </nav>
 
         <div className="sidebar-user">
-          <div className="user-avatar">SB</div>
+          <div className="user-avatar">{initialsFromName(userName)}</div>
           <div className="min-w-0 flex-1">
-            <div className="user-name">{d.shell.staffName}</div>
-            <div className="user-role">{statusLabel}</div>
+            <div className="user-name">{userName}</div>
+            <div className="user-role">{userRole}</div>
           </div>
           <div className="status-dot" title={d.shell[apiStatus.online ? "apiOnlineTitle" : "apiOfflineTitle"]} />
         </div>
@@ -99,6 +134,14 @@ export async function AppShell({
             <p className="page-subtitle">{d.shell.subtitle}</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="header-user">
+              <div className="user-avatar">{initialsFromName(userName)}</div>
+              <div className="min-w-0">
+                <div className="user-name">{userName}</div>
+                <div className="user-role">{currentUser?.email || userRole}</div>
+              </div>
+            </div>
+            <ThemeToggle darkLabel={themeLabels.dark} darkGreenLabel={themeLabels.darkGreen} lightLabel={themeLabels.light} />
             <LocaleSwitcher locale={locale} label={d.shell.language} />
             <span className={`pill ${apiStatus.online ? "pill-primary" : "pill-tertiary"}`}>{statusLabel}</span>
             <form action="/api/auth/logout" method="POST">

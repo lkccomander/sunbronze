@@ -24,13 +24,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { locale, dictionary: d } = await getRequestDictionary();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} data-theme="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
           rel="stylesheet"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{const t=localStorage.getItem("sunbronze_theme");document.documentElement.dataset.theme=t==="light"||t==="dark-green"?t:"dark";})();`,
+          }}
         />
       </head>
       <body className={`${manrope.variable} ${inter.variable}`}>

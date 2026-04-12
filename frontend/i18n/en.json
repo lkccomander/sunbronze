@@ -34,13 +34,18 @@
   "shell": {
     "brand": "SunBronze",
     "subBrand": "Administrative Portal",
-    "staffName": "SunBronze Staff",
     "apiOnlineTitle": "Clinic API online",
     "apiOfflineTitle": "Clinic API offline",
     "subtitle": "Coordinate appointments, customers, and WhatsApp handoffs from one calm workspace.",
+    "noUser": "No active session",
     "logout": "Log out",
     "skip": "Skip to main content",
     "language": "Language",
+    "theme": {
+      "dark": "Dark",
+      "darkGreen": "Dark green",
+      "light": "Light"
+    },
     "nav": {
       "dashboard": "Dashboard",
       "appointments": "Schedule",
@@ -55,38 +60,47 @@
     "title": "Front Desk Dashboard",
     "eyebrow": "Reception",
     "stats": {
-      "revenue": "Revenue Today",
-      "appointments": "Appointments",
+      "appointmentsToday": "Today's appointments",
       "inChair": "In Chair Now",
-      "pendingChats": "Pending Chats"
+      "pendingChats": "Pending chats",
+      "activeSpecialists": "Active specialists"
     },
-    "activityTitle": "Recent Activity",
-    "activitySubtitle": "Clinic moments that need calm follow-through.",
-    "activities": [
-      ["check_circle", "Treatment completed", "Elena Rossi finished HydraFacial with Dr. Claire.", "2m ago"],
-      ["calendar_month", "New appointment booked", "Michael Vance requested an initial consultation.", "18m ago"],
-      ["chat", "Human handoff queued", "WhatsApp thread is waiting for front desk review.", "31m ago"],
-      ["payments", "Payment processed", "Transaction SB-9981 was confirmed.", "41m ago"]
-    ],
-    "staffTitle": "In House Today",
-    "staffSubtitle": "Live staff coverage for the reception desk.",
-    "staff": [
-      ["CA", "Dr. Claire Aris", "Lead Dermatologist", "In Chair"],
-      ["JV", "Dr. Julian Vance", "Injectables Specialist", "Available"],
-      ["NO", "Nurse Olivia", "Aesthetic Nurse", "Break"]
-    ],
-    "status": {
-      "inChair": "In Chair",
-      "available": "Available",
-      "break": "Break"
-    }
+    "appointmentsTitle": "Today's appointments",
+    "appointmentsSubtitle": "Real bookings loaded from the backend.",
+    "emptyAppointmentsTitle": "No appointments today",
+    "emptyAppointmentsBody": "Bookings for the current day will appear here.",
+    "staffTitle": "Active specialists",
+    "staffSubtitle": "Active staff registered in the backend.",
+    "emptyStaffTitle": "No active specialists",
+    "emptyStaffBody": "Active specialists will appear here."
   },
   "appointments": {
     "title": "Appointments",
     "eyebrow": "Schedule",
     "dailyView": "Daily view",
+    "weeklyView": "Current week",
+    "monthlyView": "Current month",
+    "currentDay": "Current day",
+    "currentWeek": "Current week",
+    "currentMonth": "Current month",
     "time": "Time",
     "openSchedule": "Open schedule",
+    "newAppointmentTitle": "New appointment",
+    "blockTimeTitle": "Block time",
+    "allDay": "All day",
+    "fields": {
+      "customer": "Customer",
+      "service": "Service",
+      "barber": "Specialist",
+      "start": "Start",
+      "end": "End",
+      "notes": "Internal notes",
+      "reason": "Reason"
+    },
+    "saveAppointment": "Save appointment",
+    "saveBlock": "Block time",
+    "saveSuccess": "Changes saved.",
+    "saveError": "Could not save. Check availability, schedules, or session.",
     "emptyTitle": "No appointments scheduled today",
     "emptyBody": "No bookings were found between {start} and {end}. Add a new appointment to populate this board."
   },
@@ -136,7 +150,32 @@
     "staffSubtitle": "Active barbers available to schedule against services.",
     "noContact": "No contact recorded",
     "emptyStaffTitle": "No active staff returned",
-    "emptyStaffBody": "The barber endpoint did not return active staff records for this environment."
+    "emptyStaffBody": "The barber endpoint did not return active staff records for this environment.",
+    "newSpecialist": "New specialist",
+    "editSpecialist": "Edit",
+    "saveSpecialist": "Save specialist",
+    "createSpecialist": "Create specialist",
+    "deactivateSpecialist": "Deactivate",
+    "addHours": "Add hours",
+    "saveHours": "Save hours",
+    "deleteHours": "Delete hours",
+    "saveError": "Could not save the specialist or hours.",
+    "saveSuccess": "Changes saved.",
+    "fields": {
+      "code": "Code",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "displayName": "Display name",
+      "email": "Email",
+      "phone": "Phone",
+      "timeZone": "Time zone",
+      "workingHours": "Working hours",
+      "specialist": "Specialist",
+      "weekday": "Day",
+      "start": "Start",
+      "end": "End"
+    },
+    "weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   },
   "systemUsers": {
     "title": "System Users",

@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipBuild
+)
+
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -25,6 +29,10 @@ if ($envContents -match "NEXT_PUBLIC_API_BASE_URL=") {
 
 if (-not (Test-Path "node_modules")) {
     npm install
+}
+
+if (-not $SkipBuild) {
+    npm run build
 }
 
 npm run dev

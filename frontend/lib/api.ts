@@ -23,6 +23,18 @@ export type AuthToken = {
   roles: string[];
 };
 
+export type AuthenticatedUser = {
+  id: string;
+  email: string;
+  display_name: string;
+  first_name: string;
+  last_name: string | null;
+  location_id: string | null;
+  barber_id: string | null;
+  last_login_at: string | null;
+  roles: string[];
+};
+
 export type WhatsAppMessageSummary = {
   id: string;
   conversation_id: string | null;
@@ -78,6 +90,20 @@ export type AppointmentSummary = {
   updated_at: string;
 };
 
+export type AppointmentPayload = {
+  customer_id: string;
+  service_id: string;
+  barber_id?: string | null;
+  resource_id?: string | null;
+  conversation_id?: string | null;
+  source?: string;
+  status?: string;
+  scheduled_start_at: string;
+  scheduled_end_at?: string | null;
+  notes?: string | null;
+  internal_notes?: string | null;
+};
+
 export type BarberSummary = {
   id: string;
   location_id: string | null;
@@ -91,6 +117,54 @@ export type BarberSummary = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type BarberPayload = {
+  location_id?: string | null;
+  code?: string;
+  first_name?: string;
+  last_name?: string | null;
+  display_name?: string | null;
+  email?: string | null;
+  phone_e164?: string | null;
+  time_zone?: string;
+  is_active?: boolean;
+};
+
+export type BarberWorkingHoursSummary = {
+  id: string;
+  barber_id: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BarberWorkingHoursPayload = {
+  weekday?: number;
+  start_time?: string;
+  end_time?: string;
+  is_active?: boolean;
+};
+
+export type BarberTimeOffSummary = {
+  id: string;
+  barber_id: string;
+  starts_at: string;
+  ends_at: string;
+  reason: string | null;
+  is_all_day: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BarberTimeOffPayload = {
+  starts_at?: string;
+  ends_at?: string;
+  reason?: string | null;
+  is_all_day?: boolean;
 };
 
 export type ServiceSummary = {

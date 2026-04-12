@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy import Select, exists, select
@@ -30,6 +31,9 @@ from sunbronze_api.schemas.appointments import (
     AvailabilitySlot,
 )
 from sunbronze_api.services.whatsapp import enqueue_default_reminder_jobs
+
+BUSINESS_TIME_ZONE = ZoneInfo("America/Costa_Rica")
+WEEKDAY_NAMES = ("domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado")
 
 
 def list_appointments(db: Session, filters: AppointmentListQuery) -> list[AppointmentSummary]:
@@ -437,7 +441,7 @@ def _ensure_requested_time_is_schedulable(
         if not _within_working_hours(db, BarberWorkingHours, BarberWorkingHours.barber_id, barber_id, scheduled_start_at, scheduled_end_at):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Selected barber is outside working hours for this time.",
+                detail=_barber_working_hours_detail(db, barber_id, scheduled_start_at, scheduled_end_at),
             )
         if _has_time_off(db, BarberTimeOff, BarberTimeOff.barber_id, barber_id, scheduled_start_at, scheduled_end_at):
             raise HTTPException(
@@ -524,9 +528,11 @@ def _first_available_resource(db: Session, resource_ids: list[UUID], start_at: d
 
 
 def _within_working_hours(db: Session, model, id_column, entity_id: UUID, start_at: datetime, end_at: datetime) -> bool:
-    local_weekday = start_at.isoweekday()
-    start_time = start_at.timetz().replace(tzinfo=None)
-    end_time = end_at.timetz().replace(tzinfo=None)
+    local_start_at = _to_business_time(start_at)
+    local_end_at = _to_business_time(end_at)
+    local_weekday = _business_weekday(local_start_at)
+    start_time = _time_for_schedule(local_start_at)
+    end_time = _time_for_schedule(local_end_at)
     return db.scalar(
         select(exists().where(
             id_column == entity_id,
@@ -536,6 +542,59 @@ def _within_working_hours(db: Session, model, id_column, entity_id: UUID, start_
             model.end_time >= end_time,
         ))
     )
+
+
+def _barber_working_hours_detail(db: Session, barber_id: UUID, start_at: datetime, end_at: datetime) -> str:
+    barber = db.get(Barber, barber_id)
+    barber_name = barber.display_name if barber else "El especialista seleccionado"
+    local_start_at = _to_business_time(start_at)
+    local_end_at = _to_business_time(end_at)
+    weekday = _business_weekday(local_start_at)
+    requested_range = f"{_format_time(_time_for_schedule(local_start_at))}-{_format_time(_time_for_schedule(local_end_at))}"
+
+    working_hours = list(
+        db.scalars(
+            select(BarberWorkingHours)
+            .where(
+                BarberWorkingHours.barber_id == barber_id,
+                BarberWorkingHours.is_active.is_(True),
+                BarberWorkingHours.weekday == weekday,
+            )
+            .order_by(BarberWorkingHours.start_time.asc())
+        ).all()
+    )
+
+    weekday_name = WEEKDAY_NAMES[weekday]
+    if not working_hours:
+        return (
+            f"{barber_name} no se encuentra disponible para {requested_range} (hora Costa Rica). "
+            f"No tiene horario activo para el {weekday_name}."
+        )
+
+    hours_text = ", ".join(
+        f"{_format_time(working_hour.start_time)}-{_format_time(working_hour.end_time)}"
+        for working_hour in working_hours
+    )
+    return (
+        f"{barber_name} no se encuentra disponible para {requested_range} (hora Costa Rica). "
+        f"Su horario para el {weekday_name} es {hours_text}."
+    )
+
+
+def _to_business_time(value: datetime) -> datetime:
+    return value.astimezone(BUSINESS_TIME_ZONE) if value.tzinfo else value
+
+
+def _business_weekday(value: datetime) -> int:
+    return value.isoweekday() % 7
+
+
+def _time_for_schedule(value: datetime):
+    return value.timetz().replace(tzinfo=None)
+
+
+def _format_time(value) -> str:
+    return value.strftime("%H:%M")
 
 
 def _has_time_off(db: Session, model, id_column, entity_id: UUID, start_at: datetime, end_at: datetime) -> bool:

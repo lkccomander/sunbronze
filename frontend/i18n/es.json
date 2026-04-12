@@ -34,13 +34,18 @@
   "shell": {
     "brand": "SunBronze",
     "subBrand": "Portal administrativo",
-    "staffName": "Equipo SunBronze",
     "apiOnlineTitle": "API de la clínica en línea",
     "apiOfflineTitle": "API de la clínica sin conexión",
     "subtitle": "Coordina citas, clientes y traspasos de WhatsApp desde un espacio tranquilo.",
+    "noUser": "Sesión no iniciada",
     "logout": "Cerrar sesión",
     "skip": "Saltar al contenido principal",
     "language": "Idioma",
+    "theme": {
+      "dark": "Oscuro",
+      "darkGreen": "Oscuro verde",
+      "light": "Claro"
+    },
     "nav": {
       "dashboard": "Panel",
       "appointments": "Agenda",
@@ -55,38 +60,47 @@
     "title": "Panel de recepción",
     "eyebrow": "Recepción",
     "stats": {
-      "revenue": "Ingresos de hoy",
-      "appointments": "Citas",
+      "appointmentsToday": "Citas de hoy",
       "inChair": "En cabina",
-      "pendingChats": "Chats pendientes"
+      "pendingChats": "Chats pendientes",
+      "activeSpecialists": "Especialistas activos"
     },
-    "activityTitle": "Actividad reciente",
-    "activitySubtitle": "Momentos de la clínica que necesitan seguimiento tranquilo.",
-    "activities": [
-      ["check_circle", "Tratamiento completado", "Elena Rossi terminó HydraFacial con Dra. Claire.", "hace 2 min"],
-      ["calendar_month", "Nueva cita reservada", "Michael Vance solicitó una consulta inicial.", "hace 18 min"],
-      ["chat", "Traspaso humano en cola", "Un hilo de WhatsApp espera revisión de recepción.", "hace 31 min"],
-      ["payments", "Pago procesado", "La transacción SB-9981 fue confirmada.", "hace 41 min"]
-    ],
-    "staffTitle": "En clínica hoy",
-    "staffSubtitle": "Cobertura del equipo para la recepción.",
-    "staff": [
-      ["CA", "Dra. Claire Aris", "Dermatóloga principal", "En cabina"],
-      ["JV", "Dr. Julian Vance", "Especialista en inyectables", "Disponible"],
-      ["NO", "Enfermera Olivia", "Enfermera estética", "Descanso"]
-    ],
-    "status": {
-      "inChair": "En cabina",
-      "available": "Disponible",
-      "break": "Descanso"
-    }
+    "appointmentsTitle": "Citas de hoy",
+    "appointmentsSubtitle": "Reservas reales leídas desde el backend.",
+    "emptyAppointmentsTitle": "No hay citas hoy",
+    "emptyAppointmentsBody": "Cuando existan reservas para el día actual aparecerán aquí.",
+    "staffTitle": "Especialistas activos",
+    "staffSubtitle": "Equipo activo registrado en el backend.",
+    "emptyStaffTitle": "No hay especialistas activos",
+    "emptyStaffBody": "Cuando existan especialistas activos aparecerán aquí."
   },
   "appointments": {
     "title": "Citas",
     "eyebrow": "Agenda",
     "dailyView": "Vista diaria",
+    "weeklyView": "Semana actual",
+    "monthlyView": "Mes actual",
+    "currentDay": "Día actual",
+    "currentWeek": "Semana actual",
+    "currentMonth": "Mes actual",
     "time": "Hora",
     "openSchedule": "Agenda abierta",
+    "newAppointmentTitle": "Nueva cita",
+    "blockTimeTitle": "Bloquear horario",
+    "allDay": "Todo el día",
+    "fields": {
+      "customer": "Cliente",
+      "service": "Servicio",
+      "barber": "Especialista",
+      "start": "Inicio",
+      "end": "Fin",
+      "notes": "Notas internas",
+      "reason": "Motivo"
+    },
+    "saveAppointment": "Guardar cita",
+    "saveBlock": "Bloquear horario",
+    "saveSuccess": "Cambios guardados.",
+    "saveError": "No se pudo guardar. Revisa disponibilidad, horarios o sesión.",
     "emptyTitle": "No hay citas programadas hoy",
     "emptyBody": "No se encontraron reservas entre {start} y {end}. Agrega una nueva cita para poblar este tablero."
   },
@@ -136,7 +150,32 @@
     "staffSubtitle": "Especialistas activos disponibles para agendar servicios.",
     "noContact": "Sin contacto registrado",
     "emptyStaffTitle": "No se devolvió equipo activo",
-    "emptyStaffBody": "El endpoint de especialistas no devolvió personal activo para este entorno."
+    "emptyStaffBody": "El endpoint de especialistas no devolvió personal activo para este entorno.",
+    "newSpecialist": "Nuevo especialista",
+    "editSpecialist": "Editar",
+    "saveSpecialist": "Guardar especialista",
+    "createSpecialist": "Crear especialista",
+    "deactivateSpecialist": "Desactivar",
+    "addHours": "Agregar horario",
+    "saveHours": "Guardar horario",
+    "deleteHours": "Eliminar horario",
+    "saveError": "No se pudo guardar el especialista u horario.",
+    "saveSuccess": "Cambios guardados.",
+    "fields": {
+      "code": "Código",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "displayName": "Nombre visible",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "timeZone": "Zona horaria",
+      "workingHours": "Horarios",
+      "specialist": "Especialista",
+      "weekday": "Día",
+      "start": "Inicio",
+      "end": "Fin"
+    },
+    "weekdays": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
   },
   "systemUsers": {
     "title": "Usuarios del sistema",
