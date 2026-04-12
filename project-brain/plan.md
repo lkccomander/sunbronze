@@ -176,3 +176,34 @@ Objetivo: convertir la pantalla `Servicios y equipo` del frontend en una secció
      - editar miembro del equipo
      - desactivar/reactivar miembro del equipo
      - cambiar idioma ES/EN y confirmar que la pantalla se mantiene traducida.
+
+## 2026-04-11 22:10:37 -0600 - Phase 8: Mobile responsive y navegación móvil
+
+Estado: pendiente.
+
+Objetivo: convertir la base responsive existente del frontend en una experiencia móvil pulida para clientes y usuarios internos, manteniendo español como default, soporte ES/EN, y el diseño SkyGlass migrado.
+
+1. Auditoría móvil
+   - Revisar las pantallas principales en viewport móvil: login, dashboard, citas, clientes, conversaciones, servicios/equipo y usuarios del sistema.
+   - Identificar cortes de layout, textos que se salen, tablas incómodas, acciones pequeñas y estados que dependan demasiado del desktop.
+   - Validar que los avatars con iniciales en clientes y usuarios mantengan tamaño estable en móvil.
+
+2. Navegación móvil
+   - Diseñar e implementar navegación móvil para reemplazar o adaptar el sidebar en pantallas pequeñas.
+   - Evaluar drawer, barra inferior o header compacto según lo que encaje mejor con el flujo administrativo.
+   - Mantener accesibles idioma, estado API y logout sin saturar la pantalla.
+
+3. Listas y tablas
+   - Transformar tablas críticas en tarjetas o filas responsive cuando el scroll horizontal no sea suficiente.
+   - Priorizar legibilidad de clientes, usuarios del sistema, servicios y citas.
+   - Asegurar que acciones como editar, activar/desactivar y crear sigan siendo claras en pantallas táctiles.
+
+4. Formularios móviles
+   - Revisar formularios de login, CRUD de usuarios del sistema y futuros CRUD de servicios/equipo.
+   - Ajustar spacing, tamaños de inputs, botones y validaciones para uso con teclado móvil.
+   - Confirmar que los mensajes de error y confirmaciones se lean bien en español e inglés.
+
+5. Verificación
+   - Probar al menos en viewports tipo 375x667, 390x844 y 430x932.
+   - Ejecutar `npm run build` en `frontend`.
+   - Hacer QA manual de navegación, login, listado de clientes, listado de usuarios y edición básica.

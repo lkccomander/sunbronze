@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
+import logoImage from "@/app/assets/logo.jpg";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getApiStatus } from "@/lib/api";
 import { getRequestDictionary } from "@/lib/i18n-server";
@@ -52,8 +54,11 @@ export async function AppShell({
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="sidebar-brand-name">{d.shell.brand}</div>
-          <div className="sidebar-brand-sub">{d.shell.subBrand}</div>
+          <Image className="sidebar-brand-logo" src={logoImage} alt="SunBronze" priority />
+          <div className="min-w-0">
+            <div className="sidebar-brand-name">{d.shell.brand}</div>
+            <div className="sidebar-brand-sub">{d.shell.subBrand}</div>
+          </div>
         </div>
 
         <nav className="sidebar-nav" aria-label={d.shell.nav.dashboard}>

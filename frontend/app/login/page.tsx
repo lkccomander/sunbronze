@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
+import logoImage from "@/app/assets/logo.jpg";
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, dictionaries, normalizeLocale, type Locale } from "@/lib/i18n";
 
 export default function LoginPage() {
@@ -59,7 +61,10 @@ export default function LoginPage() {
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <section className="card-muted">
           <div className="flex items-center justify-between gap-4">
-            <p className="stat-label">{d.login.eyebrow}</p>
+            <div className="login-brand">
+              <Image className="login-brand-logo" src={logoImage} alt="SunBronze" priority />
+              <p className="stat-label">{d.login.eyebrow}</p>
+            </div>
             <select
               className="rounded-[var(--radius-md)] bg-[var(--color-surface-container)] px-2 py-1 text-sm text-[var(--color-on-surface)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
               value={locale}
