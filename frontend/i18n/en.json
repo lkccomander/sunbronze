@@ -68,6 +68,8 @@
     },
     "appointmentsTitle": "Today's appointments",
     "appointmentsSubtitle": "Real bookings loaded from the backend.",
+    "monthlyAppointmentsTitle": "Appointments by month",
+    "monthlyAppointmentsSubtitle": "Appointment count recorded during the current year.",
     "emptyAppointmentsTitle": "No appointments today",
     "emptyAppointmentsBody": "Bookings for the current day will appear here.",
     "staffTitle": "Active specialists",

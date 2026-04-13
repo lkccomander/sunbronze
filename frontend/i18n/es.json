@@ -68,6 +68,8 @@
     },
     "appointmentsTitle": "Citas de hoy",
     "appointmentsSubtitle": "Reservas reales leídas desde el backend.",
+    "monthlyAppointmentsTitle": "Citas por mes",
+    "monthlyAppointmentsSubtitle": "Cantidad de citas registradas durante el año actual.",
     "emptyAppointmentsTitle": "No hay citas hoy",
     "emptyAppointmentsBody": "Cuando existan reservas para el día actual aparecerán aquí.",
     "staffTitle": "Especialistas activos",

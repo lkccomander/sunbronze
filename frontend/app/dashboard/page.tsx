@@ -66,6 +66,16 @@ function endOfToday(): Date {
   return date;
 }
 
+function startOfBusinessYear(): Date {
+  const today = businessDateParts(new Date());
+  return businessDateStartUtc(today.year, 1, 1);
+}
+
+function startOfNextBusinessYear(): Date {
+  const today = businessDateParts(new Date());
+  return businessDateStartUtc(today.year + 1, 1, 1);
+}
+
 function formatTime(value: string | null, locale: string, fallback: string): string {
   if (!value) {
     return fallback;
@@ -83,8 +93,34 @@ function customerName(customer: CustomerSummary | undefined, fallback: string): 
   return customer.display_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.whatsapp_phone_e164;
 }
 
+function appointmentCountsByMonth(appointments: AppointmentSummary[]): number[] {
+  const today = businessDateParts(new Date());
+  const counts = Array.from({ length: 12 }, () => 0);
+  for (const appointment of appointments) {
+    const startsAt = new Date(appointment.scheduled_start_at);
+    if (Number.isNaN(startsAt.getTime())) {
+      continue;
+    }
+    const parts = businessDateParts(startsAt);
+    if (parts.year === today.year) {
+      counts[parts.month - 1] += 1;
+    }
+  }
+  return counts;
+}
+
+function monthLabels(locale: string): string[] {
+  const today = businessDateParts(new Date());
+  return Array.from({ length: 12 }, (_, index) =>
+    new Intl.DateTimeFormat(locale, { month: "short", timeZone: BUSINESS_TIME_ZONE }).format(
+      businessDateStartUtc(today.year, index + 1, 1),
+    ),
+  );
+}
+
 async function loadDashboardData(accessToken: string | null): Promise<{
   appointments: AppointmentSummary[];
+  yearlyAppointments: AppointmentSummary[];
   barbers: BarberSummary[];
   customers: CustomerSummary[];
   conversations: StaffConversationSummary[];
@@ -92,9 +128,12 @@ async function loadDashboardData(accessToken: string | null): Promise<{
 }> {
   const todayStart = startOfToday().toISOString();
   const todayEnd = endOfToday().toISOString();
+  const yearStart = startOfBusinessYear().toISOString();
+  const nextYearStart = startOfNextBusinessYear().toISOString();
 
-  const [appointments, barbers, customers, services, conversations] = await Promise.all([
+  const [appointments, yearlyAppointments, barbers, customers, services, conversations] = await Promise.all([
     fetchApiJson<AppointmentSummary[]>(`/api/appointments?from=${encodeURIComponent(todayStart)}&start_to=${encodeURIComponent(todayEnd)}`).catch(() => []),
+    fetchApiJson<AppointmentSummary[]>(`/api/appointments?from=${encodeURIComponent(yearStart)}&start_to=${encodeURIComponent(nextYearStart)}`).catch(() => []),
     fetchApiJson<BarberSummary[]>("/api/barbers?is_active=true&limit=200").catch(() => []),
     fetchApiJson<CustomerSummary[]>("/api/customers?is_active=true&limit=200").catch(() => []),
     fetchApiJson<ServiceSummary[]>("/api/services?is_active=true&limit=200").catch(() => []),
@@ -103,17 +142,20 @@ async function loadDashboardData(accessToken: string | null): Promise<{
       : Promise.resolve([]),
   ]);
 
-  return { appointments, barbers, customers, conversations, services };
+  return { appointments, yearlyAppointments, barbers, customers, conversations, services };
 }
 
 export default async function DashboardPage() {
   const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
   const sessionToken = (await cookies()).get(AUTH_COOKIE_NAME)?.value ?? null;
-  const { appointments, barbers, customers, conversations, services } = await loadDashboardData(sessionToken);
+  const { appointments, yearlyAppointments, barbers, customers, conversations, services } = await loadDashboardData(sessionToken);
   const customerById = new Map(customers.map((item) => [item.id, item]));
   const serviceById = new Map(services.map((item) => [item.id, item.name]));
   const pendingConversations = conversations.filter((item) => item.handed_off_to_human || item.assigned_staff_user_id === null);
   const inChair = appointments.filter((item) => item.status === "checked_in").length;
+  const monthlyAppointments = appointmentCountsByMonth(yearlyAppointments);
+  const monthlyLabels = monthLabels(locale);
+  const highestMonthlyCount = Math.max(...monthlyAppointments, 1);
 
   return (
     <AppShell title={d.dashboard.title} eyebrow={d.dashboard.eyebrow} activeNav="dashboard">
@@ -123,6 +165,39 @@ export default async function DashboardPage() {
         <StatCard label={d.dashboard.stats.pendingChats} value={String(pendingConversations.length)} tone="soft" />
         <StatCard label={d.dashboard.stats.activeSpecialists} value={String(barbers.length)} />
       </div>
+      <section className="app-panel mt-6">
+        <div className="app-panel-header">
+          <h3 className="app-panel-title">{d.dashboard.monthlyAppointmentsTitle}</h3>
+          <p className="app-panel-subtitle mt-1">{d.dashboard.monthlyAppointmentsSubtitle}</p>
+        </div>
+        <div className="h-72 overflow-x-auto">
+          <div className="grid h-full min-w-[760px] grid-cols-[44px_1fr] gap-4">
+            <div className="flex flex-col justify-between pb-8 text-xs font-semibold text-[var(--color-outline)]">
+              <span>{highestMonthlyCount}</span>
+              <span>{Math.round(highestMonthlyCount / 2)}</span>
+              <span>0</span>
+            </div>
+            <div className="grid grid-rows-[1fr_auto]">
+              <div className="relative flex items-end justify-between gap-5 border-b border-[var(--color-surface-container-high)] bg-[linear-gradient(to_bottom,var(--color-surface-container-high)_1px,transparent_1px)] pb-0" style={{ backgroundSize: "100% 33.33%" }}>
+                {monthlyAppointments.map((count, index) => (
+                  <div key={monthlyLabels[index]} className="flex h-full flex-1 items-end justify-center">
+                    <div
+                      className="w-full max-w-8 rounded-t-[var(--radius-sm)] bg-[var(--color-primary)]"
+                      style={{ height: `${Math.max(count === 0 ? 0 : 8, (count / highestMonthlyCount) * 100)}%` }}
+                      title={`${monthlyLabels[index]}: ${count}`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-between gap-5 text-sm font-semibold text-[var(--color-outline)]">
+                {monthlyLabels.map((label) => (
+                  <span key={label} className="flex-1 text-center">{label}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Panel title={d.dashboard.appointmentsTitle} subtitle={d.dashboard.appointmentsSubtitle}>
           <div className="grid gap-4">
