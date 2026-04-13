@@ -515,19 +515,21 @@ function DayBoard({
                     return null;
                   }
                   const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
-                  const height = Math.max(44, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR));
+                  const height = Math.max(96, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR));
                   return (
-                    <article key={item.id} className={`absolute left-2 right-2 rounded-[var(--radius-lg)] border p-3 shadow-sm ${appointmentCardClasses(item.status.toLowerCase())}`} style={{ top, height }}>
-                      <p className="truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
+                    <article key={item.id} className={`absolute left-2 right-2 overflow-hidden rounded-[var(--radius-lg)] border p-3 shadow-sm ${appointmentCardClasses(item.status.toLowerCase())}`} style={{ top, height }}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="min-w-0 truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
+                        {item.status !== "cancelled" ? (
+                          <div className="flex shrink-0 flex-wrap gap-2">
+                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
+                            <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
+                          </div>
+                        ) : null}
+                      </div>
                       <p className="stat-label mt-1 truncate">{serviceById.get(item.service_id) || common.service}</p>
                       <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{formatTimeRange(start, end, locale)}</p>
                       <p className="mt-1 text-xs text-[var(--color-outline)]">{item.resource_id ? resourceById.get(item.resource_id) || common.service : item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
-                      {item.status !== "cancelled" ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
-                          <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
-                        </div>
-                      ) : null}
                     </article>
                   );
                 })}
@@ -612,14 +614,16 @@ function SummaryBoard({
             <div className="mt-4 grid gap-3">
               {dayAppointments.slice(0, 4).map((item) => (
                 <div key={item.id} className="rounded-[var(--radius-md)] bg-[var(--color-surface-container-lowest)] p-3">
-                  <p className="truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
+                    {item.status !== "cancelled" ? (
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
+                        <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
+                      </div>
+                    ) : null}
+                  </div>
                   <p className="stat-label mt-1">{serviceById.get(item.service_id) || common.service}</p>
-                  {item.status !== "cancelled" ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
-                      <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
-                    </div>
-                  ) : null}
                   <p className="mt-2 text-xs text-[var(--color-outline)]">{formatTimeRange(new Date(item.scheduled_start_at), new Date(item.scheduled_end_at), locale)} · {item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
                 </div>
               ))}
