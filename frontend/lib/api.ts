@@ -167,6 +167,18 @@ export type BarberTimeOffPayload = {
   is_all_day?: boolean;
 };
 
+export type ResourceSummary = {
+  id: string;
+  location_id: string;
+  code: string;
+  name: string;
+  resource_type: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ServiceSummary = {
   id: string;
   code: string;

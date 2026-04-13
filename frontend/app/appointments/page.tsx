@@ -9,6 +9,7 @@ import {
   type BarberSummary,
   type BarberTimeOffSummary,
   type CustomerSummary,
+  type ResourceSummary,
   type ServiceSummary,
   fetchApiJson,
   fetchApiJsonWithToken,
@@ -20,17 +21,19 @@ async function loadScheduleData(accessToken: string): Promise<{
   barbers: BarberSummary[];
   services: ServiceSummary[];
   customers: CustomerSummary[];
+  resources: ResourceSummary[];
   timeOff: BarberTimeOffSummary[];
 }> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
 
-  const [appointments, barbers, services, customers] = await Promise.all([
+  const [appointments, barbers, services, customers, resources] = await Promise.all([
     fetchApiJsonWithToken<AppointmentSummary[]>(`/api/appointments?from=${encodeURIComponent(monthStart)}&start_to=${encodeURIComponent(nextMonthStart)}`, accessToken).catch(() => []),
     fetchApiJson<BarberSummary[]>("/api/barbers?is_active=true&limit=200").catch(() => []),
     fetchApiJson<ServiceSummary[]>("/api/services?is_active=true&limit=200").catch(() => []),
     fetchApiJson<CustomerSummary[]>("/api/customers?is_active=true&limit=200").catch(() => []),
+    fetchApiJson<ResourceSummary[]>("/api/resources?is_active=true&limit=200").catch(() => []),
   ]);
 
   const timeOffLists = await Promise.all(
@@ -41,7 +44,7 @@ async function loadScheduleData(accessToken: string): Promise<{
     ),
   );
 
-  return { appointments, barbers, services, customers, timeOff: timeOffLists.flat() };
+  return { appointments, barbers, services, customers, resources, timeOff: timeOffLists.flat() };
 }
 
 export default async function AppointmentsPage() {
@@ -55,7 +58,7 @@ export default async function AppointmentsPage() {
     );
   }
 
-  const { appointments, barbers, services, customers, timeOff } = await loadScheduleData(sessionToken);
+  const { appointments, barbers, services, customers, resources, timeOff } = await loadScheduleData(sessionToken);
 
   return (
     <AppShell title={d.appointments.title} eyebrow={d.appointments.eyebrow} activeNav="appointments">
@@ -63,6 +66,7 @@ export default async function AppointmentsPage() {
         initialAppointments={appointments}
         initialTimeOff={timeOff}
         barbers={barbers}
+        resources={resources}
         services={services}
         customers={customers}
         copy={d.appointments}

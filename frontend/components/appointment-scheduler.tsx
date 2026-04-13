@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import type { AppointmentSummary, BarberSummary, BarberTimeOffSummary, CustomerSummary, ServiceSummary } from "@/lib/api";
+import type { AppointmentSummary, BarberSummary, BarberTimeOffSummary, CustomerSummary, ResourceSummary, ServiceSummary } from "@/lib/api";
 
 type SchedulerCopy = {
   dailyView: string;
@@ -37,11 +37,13 @@ type CommonCopy = {
   blockTime: string;
   customer: string;
   newAppointment: string;
+  none: string;
   service: string;
   unassignedBarber: string;
 };
 
 type ViewMode = "day" | "week" | "month";
+type ScheduleColumn = { id: string; label: string; kind: "barber" | "resource" | "open" };
 
 const DAY_START_HOUR = 9;
 const DAY_END_HOUR = 20;
@@ -133,6 +135,7 @@ export function AppointmentScheduler({
   initialAppointments,
   initialTimeOff,
   barbers,
+  resources,
   services,
   customers,
   copy,
@@ -142,6 +145,7 @@ export function AppointmentScheduler({
   initialAppointments: AppointmentSummary[];
   initialTimeOff: BarberTimeOffSummary[];
   barbers: BarberSummary[];
+  resources: ResourceSummary[];
   services: ServiceSummary[];
   customers: CustomerSummary[];
   copy: SchedulerCopy;
@@ -158,11 +162,16 @@ export function AppointmentScheduler({
   const today = useMemo(() => new Date(), []);
 
   const serviceById = useMemo(() => new Map(services.map((item) => [item.id, item.name])), [services]);
+  const tanningResources = useMemo(
+    () => resources.filter((item) => [item.code, item.name, item.resource_type].some((value) => /bronceado|tanning/i.test(value))),
+    [resources],
+  );
   const customerById = useMemo(
     () => new Map(customers.map((item) => [item.id, item.display_name || [item.first_name, item.last_name].filter(Boolean).join(" ") || common.customer])),
     [common.customer, customers],
   );
   const barberById = useMemo(() => new Map(barbers.map((item) => [item.id, item.display_name])), [barbers]);
+  const resourceById = useMemo(() => new Map(resources.map((item) => [item.id, item.name])), [resources]);
   const editingAppointment = useMemo(
     () => initialAppointments.find((item) => item.id === editingAppointmentId) ?? null,
     [editingAppointmentId, initialAppointments],
@@ -197,6 +206,7 @@ export function AppointmentScheduler({
         isEditing
           ? {
               barber_id: formData.get("barber_id") || null,
+              resource_id: formData.get("resource_id") || null,
               status: formData.get("status") || null,
               scheduled_start_at: startAt,
               scheduled_end_at: endAt ? new Date(endAt).toISOString() : null,
@@ -206,6 +216,7 @@ export function AppointmentScheduler({
               customer_id: formData.get("customer_id"),
               service_id: formData.get("service_id"),
               barber_id: formData.get("barber_id") || null,
+              resource_id: formData.get("resource_id") || null,
               source: "admin_console",
               status: formData.get("status") || "confirmed",
               scheduled_start_at: startAt,
@@ -327,12 +338,24 @@ export function AppointmentScheduler({
             </label>
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.barber}</span>
-              <select className="input-field" name="barber_id" defaultValue={editingAppointment?.barber_id ?? undefined} required>
+              <select className="input-field" name="barber_id" defaultValue={editingAppointment?.barber_id ?? ""}>
+                <option value="">{common.unassignedBarber}</option>
                 {barbers.map((barber) => (
                   <option key={barber.id} value={barber.id}>{barber.display_name}</option>
                 ))}
               </select>
             </label>
+            {tanningResources.length > 0 ? (
+              <label className="grid gap-2">
+                <span className="stat-label">{copy.fields.resource}</span>
+                <select className="input-field" name="resource_id" defaultValue={editingAppointment?.resource_id ?? ""}>
+                  <option value="">{common.none}</option>
+                  {tanningResources.map((resource) => (
+                    <option key={resource.id} value={resource.id}>{resource.name}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.start}</span>
               <input className="input-field" name="scheduled_start_at" type="datetime-local" defaultValue={formStart} required />
@@ -355,7 +378,7 @@ export function AppointmentScheduler({
               <span className="stat-label">{copy.fields.notes}</span>
               <input className="input-field" name="internal_notes" defaultValue={editingAppointment?.internal_notes ?? ""} />
             </label>
-            <button className="btn btn-primary self-end justify-center" disabled={isPending || customers.length === 0 || services.length === 0 || barbers.length === 0}>
+            <button className="btn btn-primary self-end justify-center" disabled={isPending || customers.length === 0 || services.length === 0 || (barbers.length === 0 && tanningResources.length === 0)}>
               {editingAppointment ? copy.updateAppointment : copy.saveAppointment}
             </button>
           </form>
@@ -394,7 +417,7 @@ export function AppointmentScheduler({
         ) : null}
 
         {viewMode === "day" ? (
-          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
+          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} resources={tanningResources} serviceById={serviceById} customerById={customerById} barberById={barberById} resourceById={resourceById} today={today} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         ) : (
           <SummaryBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} viewMode={viewMode} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         )}
@@ -407,9 +430,11 @@ function DayBoard({
   appointments,
   timeOff,
   barbers,
+  resources,
   serviceById,
   customerById,
   barberById,
+  resourceById,
   today,
   locale,
   common,
@@ -420,9 +445,11 @@ function DayBoard({
   appointments: AppointmentSummary[];
   timeOff: BarberTimeOffSummary[];
   barbers: BarberSummary[];
+  resources: ResourceSummary[];
   serviceById: Map<string, string>;
   customerById: Map<string, string>;
   barberById: Map<string, string>;
+  resourceById: Map<string, string>;
   today: Date;
   locale: string;
   common: CommonCopy;
@@ -433,7 +460,13 @@ function DayBoard({
   const dayMinutes = (DAY_END_HOUR - DAY_START_HOUR) * MINUTES_PER_HOUR;
   const boardHeight = dayMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
   const hourMarkers = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, index) => DAY_START_HOUR + index);
-  const columns = barbers.length > 0 ? barbers.map((item) => ({ id: item.id, label: item.display_name })) : [{ id: "open", label: copy.openSchedule }];
+  const columns: ScheduleColumn[] = [
+    ...barbers.map((item) => ({ id: item.id, label: item.display_name, kind: "barber" as const })),
+    ...resources.map((item) => ({ id: item.id, label: item.name, kind: "resource" as const })),
+  ];
+  if (columns.length === 0) {
+    columns.push({ id: "open", label: copy.openSchedule, kind: "open" });
+  }
 
   return (
     <div className="mt-6 overflow-x-auto">
@@ -464,7 +497,15 @@ function DayBoard({
                 <div key={hour} className="absolute left-0 right-0 border-t border-dashed border-[var(--color-surface-container-high)]" style={{ top: (hour - DAY_START_HOUR) * HOUR_HEIGHT_PX }} />
               ))}
               {appointments
-                .filter((item) => (item.barber_id ? item.barber_id === column.id : column.id === "open"))
+                .filter((item) => {
+                  if (column.kind === "barber") {
+                    return item.barber_id === column.id;
+                  }
+                  if (column.kind === "resource") {
+                    return item.resource_id === column.id;
+                  }
+                  return !item.barber_id && !item.resource_id;
+                })
                 .map((item) => {
                   const start = new Date(item.scheduled_start_at);
                   const end = new Date(item.scheduled_end_at);
@@ -480,7 +521,7 @@ function DayBoard({
                       <p className="truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
                       <p className="stat-label mt-1 truncate">{serviceById.get(item.service_id) || common.service}</p>
                       <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{formatTimeRange(start, end, locale)}</p>
-                      <p className="mt-1 text-xs text-[var(--color-outline)]">{item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
+                      <p className="mt-1 text-xs text-[var(--color-outline)]">{item.resource_id ? resourceById.get(item.resource_id) || common.service : item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
                       {item.status !== "cancelled" ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>

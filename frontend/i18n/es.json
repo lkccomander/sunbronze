@@ -93,6 +93,7 @@
       "customer": "Cliente",
       "service": "Servicio",
       "barber": "Especialista",
+      "resource": "Recurso",
       "start": "Inicio",
       "end": "Fin",
       "status": "Estado",
