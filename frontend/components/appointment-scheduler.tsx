@@ -18,6 +18,12 @@ type SchedulerCopy = {
   allDay: string;
   fields: Record<string, string>;
   saveAppointment: string;
+  updateAppointment: string;
+  editAppointment: string;
+  cancelAppointment: string;
+  cancelSuccess: string;
+  cancelError: string;
+  confirmCancel: string;
   saveBlock: string;
   saveSuccess: string;
   saveError: string;
@@ -97,6 +103,10 @@ function toInputDateTime(value: Date): string {
   return new Date(value.getTime() - offset * 60_000).toISOString().slice(0, 16);
 }
 
+function endDateTimeForForm(appointment: AppointmentSummary | null, fallback: Date): string {
+  return toInputDateTime(appointment ? new Date(appointment.scheduled_end_at) : fallback);
+}
+
 function appointmentCardClasses(status: string): string {
   if (status === "cancelled") {
     return "border-[var(--color-tertiary-container)] bg-[rgba(247,197,197,0.45)]";
@@ -141,6 +151,7 @@ export function AppointmentScheduler({
   const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [activeForm, setActiveForm] = useState<"appointment" | "block" | null>(null);
+  const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -152,6 +163,10 @@ export function AppointmentScheduler({
     [common.customer, customers],
   );
   const barberById = useMemo(() => new Map(barbers.map((item) => [item.id, item.display_name])), [barbers]);
+  const editingAppointment = useMemo(
+    () => initialAppointments.find((item) => item.id === editingAppointmentId) ?? null,
+    [editingAppointmentId, initialAppointments],
+  );
 
   const visibleAppointments = useMemo(() => {
     const rangeStart = viewMode === "day" ? startOfDay(today) : viewMode === "week" ? startOfWeek(today) : startOfMonth(today);
@@ -172,18 +187,32 @@ export function AppointmentScheduler({
   async function submitAppointment(formData: FormData) {
     setError(null);
     setMessage(null);
-    const response = await fetch("/api/appointments", {
-      method: "POST",
+    const isEditing = editingAppointment !== null;
+    const startAt = new Date(String(formData.get("scheduled_start_at"))).toISOString();
+    const endAt = String(formData.get("scheduled_end_at") || "");
+    const response = await fetch(isEditing ? `/api/appointments/${editingAppointment.id}` : "/api/appointments", {
+      method: isEditing ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customer_id: formData.get("customer_id"),
-        service_id: formData.get("service_id"),
-        barber_id: formData.get("barber_id") || null,
-        source: "admin_console",
-        status: "confirmed",
-        scheduled_start_at: new Date(String(formData.get("scheduled_start_at"))).toISOString(),
-        internal_notes: String(formData.get("internal_notes") || "") || null,
-      }),
+      body: JSON.stringify(
+        isEditing
+          ? {
+              barber_id: formData.get("barber_id") || null,
+              status: formData.get("status") || null,
+              scheduled_start_at: startAt,
+              scheduled_end_at: endAt ? new Date(endAt).toISOString() : null,
+              internal_notes: String(formData.get("internal_notes") || "") || null,
+            }
+          : {
+              customer_id: formData.get("customer_id"),
+              service_id: formData.get("service_id"),
+              barber_id: formData.get("barber_id") || null,
+              source: "admin_console",
+              status: formData.get("status") || "confirmed",
+              scheduled_start_at: startAt,
+              scheduled_end_at: endAt ? new Date(endAt).toISOString() : null,
+              internal_notes: String(formData.get("internal_notes") || "") || null,
+            },
+      ),
     });
 
     if (!response.ok) {
@@ -193,7 +222,33 @@ export function AppointmentScheduler({
 
     setMessage(copy.saveSuccess);
     setActiveForm(null);
+    setEditingAppointmentId(null);
     startTransition(() => router.refresh());
+  }
+
+  async function cancelAppointment(appointmentId: string) {
+    if (!window.confirm(copy.confirmCancel)) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    const response = await fetch(`/api/appointments/${appointmentId}/cancel`, { method: "POST" });
+
+    if (!response.ok) {
+      setError(await errorMessageFromResponse(response, copy.cancelError));
+      return;
+    }
+
+    setMessage(copy.cancelSuccess);
+    setActiveForm(null);
+    setEditingAppointmentId(null);
+    startTransition(() => router.refresh());
+  }
+
+  function openAppointmentForm(appointment: AppointmentSummary | null) {
+    setEditingAppointmentId(appointment?.id ?? null);
+    setActiveForm("appointment");
   }
 
   async function submitBlock(formData: FormData) {
@@ -223,6 +278,8 @@ export function AppointmentScheduler({
 
   const defaultStart = toInputDateTime(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10));
   const defaultEnd = toInputDateTime(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11));
+  const formStart = editingAppointment ? toInputDateTime(new Date(editingAppointment.scheduled_start_at)) : defaultStart;
+  const formEnd = endDateTimeForForm(editingAppointment, new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11));
 
   return (
     <div className="grid gap-6">
@@ -241,7 +298,7 @@ export function AppointmentScheduler({
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActiveForm(activeForm === "block" ? null : "block")}>
               {common.blockTime}
             </button>
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setActiveForm(activeForm === "appointment" ? null : "appointment")}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => (activeForm === "appointment" && !editingAppointment ? setActiveForm(null) : openAppointmentForm(null))}>
               {common.newAppointment}
             </button>
           </div>
@@ -254,7 +311,7 @@ export function AppointmentScheduler({
           <form className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4" action={submitAppointment}>
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.customer}</span>
-              <select className="input-field" name="customer_id" required>
+              <select className="input-field" name="customer_id" defaultValue={editingAppointment?.customer_id} disabled={Boolean(editingAppointment)} required>
                 {customers.map((customer) => (
                   <option key={customer.id} value={customer.id}>{customerById.get(customer.id)}</option>
                 ))}
@@ -262,7 +319,7 @@ export function AppointmentScheduler({
             </label>
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.service}</span>
-              <select className="input-field" name="service_id" required>
+              <select className="input-field" name="service_id" defaultValue={editingAppointment?.service_id} disabled={Boolean(editingAppointment)} required>
                 {services.map((service) => (
                   <option key={service.id} value={service.id}>{service.name}</option>
                 ))}
@@ -270,7 +327,7 @@ export function AppointmentScheduler({
             </label>
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.barber}</span>
-              <select className="input-field" name="barber_id" required>
+              <select className="input-field" name="barber_id" defaultValue={editingAppointment?.barber_id ?? undefined} required>
                 {barbers.map((barber) => (
                   <option key={barber.id} value={barber.id}>{barber.display_name}</option>
                 ))}
@@ -278,14 +335,28 @@ export function AppointmentScheduler({
             </label>
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.start}</span>
-              <input className="input-field" name="scheduled_start_at" type="datetime-local" defaultValue={defaultStart} required />
+              <input className="input-field" name="scheduled_start_at" type="datetime-local" defaultValue={formStart} required />
+            </label>
+            <label className="grid gap-2">
+              <span className="stat-label">{copy.fields.end}</span>
+              <input className="input-field" name="scheduled_end_at" type="datetime-local" defaultValue={formEnd} />
+            </label>
+            <label className="grid gap-2">
+              <span className="stat-label">{copy.fields.status}</span>
+              <select className="input-field" name="status" defaultValue={editingAppointment?.status ?? "confirmed"}>
+                <option value="pending">pending</option>
+                <option value="confirmed">confirmed</option>
+                <option value="checked_in">checked_in</option>
+                <option value="completed">completed</option>
+                <option value="no_show">no_show</option>
+              </select>
             </label>
             <label className="grid gap-2 md:col-span-2 xl:col-span-3">
               <span className="stat-label">{copy.fields.notes}</span>
-              <input className="input-field" name="internal_notes" />
+              <input className="input-field" name="internal_notes" defaultValue={editingAppointment?.internal_notes ?? ""} />
             </label>
             <button className="btn btn-primary self-end justify-center" disabled={isPending || customers.length === 0 || services.length === 0 || barbers.length === 0}>
-              {copy.saveAppointment}
+              {editingAppointment ? copy.updateAppointment : copy.saveAppointment}
             </button>
           </form>
         ) : null}
@@ -323,9 +394,9 @@ export function AppointmentScheduler({
         ) : null}
 
         {viewMode === "day" ? (
-          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} locale={locale} common={common} copy={copy} />
+          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         ) : (
-          <SummaryBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} viewMode={viewMode} locale={locale} common={common} />
+          <SummaryBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} viewMode={viewMode} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         )}
       </section>
     </div>
@@ -343,6 +414,8 @@ function DayBoard({
   locale,
   common,
   copy,
+  onEditAppointment,
+  onCancelAppointment,
 }: {
   appointments: AppointmentSummary[];
   timeOff: BarberTimeOffSummary[];
@@ -354,6 +427,8 @@ function DayBoard({
   locale: string;
   common: CommonCopy;
   copy: SchedulerCopy;
+  onEditAppointment: (appointment: AppointmentSummary) => void;
+  onCancelAppointment: (appointmentId: string) => void;
 }) {
   const dayMinutes = (DAY_END_HOUR - DAY_START_HOUR) * MINUTES_PER_HOUR;
   const boardHeight = dayMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
@@ -406,6 +481,12 @@ function DayBoard({
                       <p className="stat-label mt-1 truncate">{serviceById.get(item.service_id) || common.service}</p>
                       <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{formatTimeRange(start, end, locale)}</p>
                       <p className="mt-1 text-xs text-[var(--color-outline)]">{item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
+                      {item.status !== "cancelled" ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
+                          <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
+                        </div>
+                      ) : null}
                     </article>
                   );
                 })}
@@ -448,6 +529,9 @@ function SummaryBoard({
   viewMode,
   locale,
   common,
+  copy,
+  onEditAppointment,
+  onCancelAppointment,
 }: {
   appointments: AppointmentSummary[];
   timeOff: BarberTimeOffSummary[];
@@ -459,6 +543,9 @@ function SummaryBoard({
   viewMode: "week" | "month";
   locale: string;
   common: CommonCopy;
+  copy: SchedulerCopy;
+  onEditAppointment: (appointment: AppointmentSummary) => void;
+  onCancelAppointment: (appointmentId: string) => void;
 }) {
   const days = useMemo(() => {
     const rangeStart = viewMode === "week" ? startOfWeek(today) : startOfMonth(today);
@@ -486,6 +573,12 @@ function SummaryBoard({
                 <div key={item.id} className="rounded-[var(--radius-md)] bg-[var(--color-surface-container-lowest)] p-3">
                   <p className="truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
                   <p className="stat-label mt-1">{serviceById.get(item.service_id) || common.service}</p>
+                  {item.status !== "cancelled" ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
+                      <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
+                    </div>
+                  ) : null}
                   <p className="mt-2 text-xs text-[var(--color-outline)]">{formatTimeRange(new Date(item.scheduled_start_at), new Date(item.scheduled_end_at), locale)} · {item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
                 </div>
               ))}
