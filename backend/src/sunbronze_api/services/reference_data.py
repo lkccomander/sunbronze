@@ -21,7 +21,9 @@ from sunbronze_api.schemas.reference_data import (
     LocationSummary,
     ReferenceListParams,
     ResourceSummary,
+    ServiceCreate,
     ServiceSummary,
+    ServiceUpdate,
 )
 
 
@@ -31,6 +33,70 @@ def list_services(db: Session, params: ReferenceListParams) -> list[ServiceSumma
     query = _apply_search_filter(query, params.search, Service.code, Service.name, Service.description)
     services = db.scalars(_apply_pagination(query, params)).all()
     return _validate_many(ServiceSummary, services)
+
+
+def get_service(db: Session, service_id: UUID) -> ServiceSummary:
+    return ServiceSummary.model_validate(_get_service(db, service_id))
+
+
+def create_service(db: Session, payload: ServiceCreate) -> ServiceSummary:
+    service = Service(
+        code=payload.code.strip(),
+        name=payload.name.strip(),
+        description=_clean_optional_text(payload.description),
+        requires_barber=payload.requires_barber,
+        requires_resource=payload.requires_resource,
+        duration_minutes=payload.duration_minutes,
+        buffer_before_minutes=payload.buffer_before_minutes,
+        buffer_after_minutes=payload.buffer_after_minutes,
+        price_cents=payload.price_cents,
+        currency_code=payload.currency_code.strip().upper(),
+        is_active=payload.is_active,
+    )
+    db.add(service)
+    db.commit()
+    db.refresh(service)
+    return ServiceSummary.model_validate(service)
+
+
+def update_service(db: Session, service_id: UUID, payload: ServiceUpdate) -> ServiceSummary:
+    service = _get_service(db, service_id)
+    values = payload.model_dump(exclude_unset=True)
+
+    if payload.code is not None:
+        service.code = payload.code.strip()
+    if payload.name is not None:
+        service.name = payload.name.strip()
+    if "description" in values:
+        service.description = _clean_optional_text(payload.description)
+    if payload.requires_barber is not None:
+        service.requires_barber = payload.requires_barber
+    if payload.requires_resource is not None:
+        service.requires_resource = payload.requires_resource
+    if payload.duration_minutes is not None:
+        service.duration_minutes = payload.duration_minutes
+    if payload.buffer_before_minutes is not None:
+        service.buffer_before_minutes = payload.buffer_before_minutes
+    if payload.buffer_after_minutes is not None:
+        service.buffer_after_minutes = payload.buffer_after_minutes
+    if "price_cents" in values:
+        service.price_cents = payload.price_cents
+    if payload.currency_code is not None:
+        service.currency_code = payload.currency_code.strip().upper()
+    if payload.is_active is not None:
+        service.is_active = payload.is_active
+
+    db.commit()
+    db.refresh(service)
+    return ServiceSummary.model_validate(service)
+
+
+def deactivate_service(db: Session, service_id: UUID) -> ServiceSummary:
+    service = _get_service(db, service_id)
+    service.is_active = False
+    db.commit()
+    db.refresh(service)
+    return ServiceSummary.model_validate(service)
 
 
 def list_barbers(db: Session, params: ReferenceListParams, location_id: str | None = None) -> list[BarberSummary]:
@@ -277,6 +343,13 @@ def _get_barber(db: Session, barber_id: UUID) -> Barber:
     if barber is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Barber not found.")
     return barber
+
+
+def _get_service(db: Session, service_id: UUID) -> Service:
+    service = db.get(Service, service_id)
+    if service is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service not found.")
+    return service
 
 
 def _get_barber_working_hours(db: Session, barber_id: UUID, hours_id: UUID) -> BarberWorkingHours:

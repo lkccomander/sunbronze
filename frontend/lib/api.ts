@@ -184,6 +184,20 @@ export type ServiceSummary = {
   updated_at: string;
 };
 
+export type ServicePayload = {
+  code?: string;
+  name?: string;
+  description?: string | null;
+  requires_barber?: boolean;
+  requires_resource?: boolean;
+  duration_minutes?: number;
+  buffer_before_minutes?: number;
+  buffer_after_minutes?: number;
+  price_cents?: number | null;
+  currency_code?: string;
+  is_active?: boolean;
+};
+
 export type CustomerSummary = {
   id: string;
   whatsapp_phone_e164: string;

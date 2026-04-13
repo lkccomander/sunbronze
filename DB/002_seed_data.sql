@@ -54,13 +54,14 @@ INSERT INTO app.services (
     buffer_before_minutes,
     buffer_after_minutes,
     price_cents,
-    currency_code
+    currency_code,
+    is_active
 )
 VALUES
-    ('corte', 'Corte', 'Servicio de corte de cabello', true, false, 45, 0, 15, 12000, 'CRC'),
-    ('barba', 'Barba', 'Arreglo y perfilado de barba', true, false, 30, 0, 10, 8000, 'CRC'),
-    ('corte-barba', 'Corte + Barba', 'Paquete de corte y barba', true, false, 75, 0, 15, 18000, 'CRC'),
-    ('sesion-bronceado', 'Sesion de Bronceado', 'Sesion individual de bronceado', false, true, 30, 0, 10, 15000, 'CRC')
+    ('corte', 'Corte', 'Servicio de corte de cabello', true, false, 45, 0, 15, 12000, 'CRC', true),
+    ('barba', 'Barba', 'Arreglo y perfilado de barba', true, false, 30, 0, 10, 8000, 'CRC', false),
+    ('corte-barba', 'Corte + Barba', 'Paquete de corte y barba', true, false, 75, 0, 15, 18000, 'CRC', false),
+    ('sesion-bronceado', 'Sesion de Bronceado', 'Sesion individual de bronceado', false, true, 30, 0, 10, 15000, 'CRC', true)
 ON CONFLICT (code) DO UPDATE
 SET
     name = EXCLUDED.name,
@@ -72,7 +73,7 @@ SET
     buffer_after_minutes = EXCLUDED.buffer_after_minutes,
     price_cents = EXCLUDED.price_cents,
     currency_code = EXCLUDED.currency_code,
-    is_active = true;
+    is_active = EXCLUDED.is_active;
 
 -- 2 barberos
 INSERT INTO app.barbers (
@@ -149,11 +150,17 @@ SELECT
     s.id,
     true
 FROM app.barbers b
-JOIN app.services s ON s.code IN ('corte', 'barba', 'corte-barba')
+JOIN app.services s ON s.code = 'corte'
 WHERE b.code IN ('walter', 'andres')
 ON CONFLICT (barber_id, service_id) DO UPDATE
 SET
     is_active = true;
+
+UPDATE app.barber_services bs
+SET is_active = false
+FROM app.services s
+WHERE bs.service_id = s.id
+  AND s.code IN ('barba', 'corte-barba');
 
 -- Horarios base de lunes a viernes de 9:00 a 17:00
 INSERT INTO app.barber_working_hours (

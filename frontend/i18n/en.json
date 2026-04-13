@@ -52,6 +52,7 @@
       "customers": "Clients",
       "conversations": "Conversations",
       "services": "Services",
+      "specialists": "Team",
       "systemUsers": "Users",
       "dev": "Dev"
     }
@@ -130,7 +131,7 @@
     "noSelectedBody": "When conversations exist, the most recent thread appears here for triage."
   },
   "services": {
-    "title": "Services & Staff",
+    "title": "Services",
     "eyebrow": "Management",
     "serviceMapTitle": "Service map",
     "serviceMapSubtitle": "Live service catalog and scheduling requirements.",
@@ -146,6 +147,13 @@
     "resource": "resource",
     "emptyServicesTitle": "No services returned",
     "emptyServicesBody": "The services endpoint is reachable, but no service records were returned.",
+    "newService": "New service",
+    "editService": "Edit service",
+    "saveService": "Save service",
+    "createService": "Create service",
+    "deactivateService": "Deactivate service",
+    "addOfferingTitle": "Add service",
+    "addOfferingBody": "Expand SunBronze's catalog with a new bookable option.",
     "staffTitle": "Staff roster",
     "staffSubtitle": "Active barbers available to schedule against services.",
     "noContact": "No contact recorded",
@@ -163,6 +171,16 @@
     "saveSuccess": "Changes saved.",
     "fields": {
       "code": "Code",
+      "serviceName": "Service name",
+      "description": "Description",
+      "duration": "Duration",
+      "price": "Price",
+      "currency": "Currency",
+      "bufferBefore": "Buffer before",
+      "bufferAfter": "Buffer after",
+      "requiresBarber": "Requires specialist",
+      "requiresResource": "Requires resource",
+      "cancel": "Cancel",
       "firstName": "First name",
       "lastName": "Last name",
       "displayName": "Display name",
@@ -176,6 +194,10 @@
       "end": "End"
     },
     "weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  },
+  "specialists": {
+    "title": "Active team",
+    "eyebrow": "Specialists"
   },
   "systemUsers": {
     "title": "System Users",

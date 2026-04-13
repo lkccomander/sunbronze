@@ -47,6 +47,34 @@ class ServiceSummary(BaseModel):
     updated_at: datetime
 
 
+class ServiceCreate(BaseModel):
+    code: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=160)
+    description: str | None = Field(default=None, max_length=500)
+    requires_barber: bool = True
+    requires_resource: bool = False
+    duration_minutes: int = Field(gt=0)
+    buffer_before_minutes: int = Field(default=0, ge=0)
+    buffer_after_minutes: int = Field(default=0, ge=0)
+    price_cents: int | None = Field(default=None, ge=0)
+    currency_code: str = Field(default="CRC", min_length=3, max_length=3)
+    is_active: bool = True
+
+
+class ServiceUpdate(BaseModel):
+    code: str | None = Field(default=None, min_length=1, max_length=80)
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    description: str | None = Field(default=None, max_length=500)
+    requires_barber: bool | None = None
+    requires_resource: bool | None = None
+    duration_minutes: int | None = Field(default=None, gt=0)
+    buffer_before_minutes: int | None = Field(default=None, ge=0)
+    buffer_after_minutes: int | None = Field(default=None, ge=0)
+    price_cents: int | None = Field(default=None, ge=0)
+    currency_code: str | None = Field(default=None, min_length=3, max_length=3)
+    is_active: bool | None = None
+
+
 class BarberSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

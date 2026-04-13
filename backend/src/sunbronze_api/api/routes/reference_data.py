@@ -20,16 +20,21 @@ from sunbronze_api.schemas.reference_data import (
     LocationSummary,
     ReferenceListParams,
     ResourceSummary,
+    ServiceCreate,
     ServiceSummary,
+    ServiceUpdate,
 )
 from sunbronze_api.services.reference_data import (
     create_barber,
     create_barber_time_off,
     create_barber_working_hours,
+    create_service,
     deactivate_barber,
+    deactivate_service,
     delete_barber_time_off,
     delete_barber_working_hours,
     get_barber,
+    get_service,
     list_barbers,
     list_barber_time_off,
     list_barber_working_hours,
@@ -40,6 +45,7 @@ from sunbronze_api.services.reference_data import (
     update_barber,
     update_barber_time_off,
     update_barber_working_hours,
+    update_service,
 )
 
 router = APIRouter()
@@ -55,6 +61,39 @@ def list_services_route(
 ) -> list[ServiceSummary]:
     params = ReferenceListParams(is_active=is_active, search=search, limit=limit, offset=offset)
     return list_services(db, params)
+
+
+@router.post("/services", response_model=ServiceSummary, status_code=201)
+def create_service_route(
+    payload: ServiceCreate,
+    _: object = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> ServiceSummary:
+    return create_service(db, payload)
+
+
+@router.get("/services/{service_id}", response_model=ServiceSummary)
+def get_service_route(service_id: UUID, db: Session = Depends(get_db_session)) -> ServiceSummary:
+    return get_service(db, service_id)
+
+
+@router.patch("/services/{service_id}", response_model=ServiceSummary)
+def update_service_route(
+    service_id: UUID,
+    payload: ServiceUpdate,
+    _: object = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> ServiceSummary:
+    return update_service(db, service_id, payload)
+
+
+@router.delete("/services/{service_id}", response_model=ServiceSummary)
+def deactivate_service_route(
+    service_id: UUID,
+    _: object = Depends(require_staff_user),
+    db: Session = Depends(get_db_session),
+) -> ServiceSummary:
+    return deactivate_service(db, service_id)
 
 
 @router.get("/barbers", response_model=list[BarberSummary])

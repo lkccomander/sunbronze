@@ -580,6 +580,201 @@ body {
   max-width: 42rem;
 }
 
+.service-card-grid {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
+.service-offering-card {
+  background-color: var(--color-surface-container-lowest);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 70%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.service-add-card {
+  align-items: center;
+  aspect-ratio: 4 / 5;
+  background-color: var(--color-surface-container-lowest);
+  border: 2px dashed color-mix(in srgb, var(--color-primary) 40%, var(--color-outline-variant));
+  border-radius: var(--radius-xl);
+  color: var(--color-on-surface);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 360px;
+  padding: var(--space-8);
+  text-align: center;
+  text-decoration: none;
+  transition: border-color var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.service-add-card:hover,
+.service-add-card:focus-visible {
+  background-color: var(--color-surface-container-low);
+  border-color: var(--color-primary);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.service-add-icon {
+  align-items: center;
+  background-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-radius: var(--radius-full);
+  color: var(--color-primary);
+  display: flex;
+  font-size: 2rem;
+  height: 64px;
+  justify-content: center;
+  line-height: 1;
+  margin-bottom: var(--space-6);
+  width: 64px;
+}
+
+.service-add-title {
+  color: var(--color-on-surface);
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.service-add-body {
+  color: var(--color-on-surface-variant);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin-top: var(--space-3);
+  max-width: 16rem;
+}
+
+.service-offering-image {
+  aspect-ratio: 16 / 11;
+  background-color: var(--color-surface-container);
+  position: relative;
+}
+
+.service-offering-image::after {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.6), transparent 58%);
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.service-offering-code {
+  background-color: rgb(15 21 32 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: var(--radius-md);
+  bottom: var(--space-4);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  left: var(--space-4);
+  letter-spacing: 0;
+  padding: var(--space-1) var(--space-3);
+  position: absolute;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.service-offering-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 260px;
+  padding: var(--space-6);
+}
+
+.service-offering-body h3 {
+  color: var(--color-on-surface);
+  font-family: var(--font-headline);
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.service-offering-price {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  text-align: right;
+}
+
+.service-offering-description {
+  color: var(--color-on-surface-variant);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.service-offering-meta {
+  border-top: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface-variant);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: var(--space-4);
+}
+
+.service-offering-buffer {
+  color: var(--color-outline);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.service-offering-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.service-editor {
+  background-color: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.service-editor-header {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.service-editor-header h3 {
+  color: var(--color-on-surface);
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: var(--space-1) 0 0;
+}
+
+.service-checkbox {
+  align-items: center;
+  color: var(--color-on-surface-variant);
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+
 .table-wrapper {
   overflow-x: auto;
   width: 100%;

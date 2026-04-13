@@ -16,6 +16,7 @@ const navItems = [
   { href: "/customers", icon: "group", key: "customers" },
   { href: "/conversations", icon: "chat", key: "conversations" },
   { href: "/services", icon: "medical_services", key: "services" },
+  { href: "/specialists", icon: "content_cut", key: "specialists" },
   { href: "/system-users", icon: "manage_accounts", key: "systemUsers" },
   { href: "/dev", icon: "developer_mode", key: "dev" },
 ] as const;
@@ -31,6 +32,9 @@ const fallbackActiveByTitle: Record<string, AppNavKey> = {
   conversaciones: "conversations",
   services: "services",
   servicios: "services",
+  specialists: "specialists",
+  especialistas: "specialists",
+  equipo: "specialists",
   users: "systemUsers",
   usuarios: "systemUsers",
   dashboard: "dashboard",

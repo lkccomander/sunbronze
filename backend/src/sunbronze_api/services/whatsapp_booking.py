@@ -313,8 +313,6 @@ def _match_service(services: list[Service], text: str) -> Service | None:
     ranked = sorted(services, key=lambda service: len(_normalize_text(f"{service.name} {service.code}")), reverse=True)
     for service in ranked:
         candidates = {_normalize_text(service.name), _normalize_text(service.code)}
-        if service.code == "corte-barba":
-            candidates.update(("corte y barba", "corte barba", "corte + barba"))
         if any(candidate and candidate in text for candidate in candidates):
             return service
     return None

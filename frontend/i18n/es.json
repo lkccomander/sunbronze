@@ -52,6 +52,7 @@
       "customers": "Clientes",
       "conversations": "Conversaciones",
       "services": "Servicios",
+      "specialists": "Equipo",
       "systemUsers": "Usuarios",
       "dev": "Dev"
     }
@@ -130,7 +131,7 @@
     "noSelectedBody": "Cuando existan conversaciones, el hilo más reciente aparecerá aquí para triage."
   },
   "services": {
-    "title": "Servicios y equipo",
+    "title": "Servicios",
     "eyebrow": "Gestión",
     "serviceMapTitle": "Mapa de servicios",
     "serviceMapSubtitle": "Catálogo de servicios y requisitos de agenda en vivo.",
@@ -146,6 +147,13 @@
     "resource": "recurso",
     "emptyServicesTitle": "No se devolvieron servicios",
     "emptyServicesBody": "El endpoint de servicios responde, pero no devolvió registros.",
+    "newService": "Nuevo servicio",
+    "editService": "Editar servicio",
+    "saveService": "Guardar servicio",
+    "createService": "Crear servicio",
+    "deactivateService": "Desactivar servicio",
+    "addOfferingTitle": "Agregar servicio",
+    "addOfferingBody": "Amplía el catálogo de SunBronze con una nueva opción reservable.",
     "staffTitle": "Equipo activo",
     "staffSubtitle": "Especialistas activos disponibles para agendar servicios.",
     "noContact": "Sin contacto registrado",
@@ -163,6 +171,16 @@
     "saveSuccess": "Cambios guardados.",
     "fields": {
       "code": "Código",
+      "serviceName": "Nombre del servicio",
+      "description": "Descripción",
+      "duration": "Duración",
+      "price": "Precio",
+      "currency": "Moneda",
+      "bufferBefore": "Preparación antes",
+      "bufferAfter": "Preparación después",
+      "requiresBarber": "Requiere especialista",
+      "requiresResource": "Requiere recurso",
+      "cancel": "Cancelar",
       "firstName": "Nombre",
       "lastName": "Apellido",
       "displayName": "Nombre visible",
@@ -176,6 +194,10 @@
       "end": "Fin"
     },
     "weekdays": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+  },
+  "specialists": {
+    "title": "Equipo activo",
+    "eyebrow": "Especialistas"
   },
   "systemUsers": {
     "title": "Usuarios del sistema",
