@@ -14,14 +14,55 @@ import {
 } from "@/lib/api";
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
 
+const BUSINESS_TIME_ZONE = "America/Costa_Rica";
+
+function businessDateParts(value: Date): { day: number; month: number; year: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BUSINESS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const partByType = new Map(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(partByType.get("year")),
+    month: Number(partByType.get("month")),
+    day: Number(partByType.get("day")),
+  };
+}
+
+function businessDateStartUtc(year: number, month: number, day: number): Date {
+  const utcGuess = new Date(Date.UTC(year, month - 1, day));
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BUSINESS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(utcGuess);
+  const partByType = new Map(parts.map((part) => [part.type, part.value]));
+  const zonedAsUtc = Date.UTC(
+    Number(partByType.get("year")),
+    Number(partByType.get("month")) - 1,
+    Number(partByType.get("day")),
+    Number(partByType.get("hour")),
+    Number(partByType.get("minute")),
+    Number(partByType.get("second")),
+  );
+  return new Date(utcGuess.getTime() - (zonedAsUtc - utcGuess.getTime()));
+}
+
 function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = businessDateParts(new Date());
+  return businessDateStartUtc(today.year, today.month, today.day);
 }
 
 function endOfToday(): Date {
   const date = startOfToday();
-  date.setDate(date.getDate() + 1);
+  date.setUTCDate(date.getUTCDate() + 1);
   return date;
 }
 
@@ -32,7 +73,7 @@ function formatTime(value: string | null, locale: string, fallback: string): str
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? fallback
-    : new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(date);
+    : new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone: BUSINESS_TIME_ZONE }).format(date);
 }
 
 function customerName(customer: CustomerSummary | undefined, fallback: string): string {
