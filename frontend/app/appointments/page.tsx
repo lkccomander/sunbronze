@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { AppointmentScheduler } from "@/components/appointment-scheduler";
 import { AppShell } from "@/components/app-shell";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { EmptyState } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { businessDateParamToDate, endOfBusinessMonth, endOfBusinessWeek, startOfBusinessMonth, startOfBusinessWeek } from "@/lib/business-time";
@@ -73,6 +74,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams?
 
   return (
     <AppShell title={d.appointments.title} eyebrow={d.appointments.eyebrow} activeNav="appointments">
+      <AutoRefresh pauseWhenSelector="[data-auto-refresh-pause='true']" />
       <AppointmentScheduler
         initialAppointments={appointments}
         initialTimeOff={timeOff}

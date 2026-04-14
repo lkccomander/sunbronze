@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { EmptyState, Panel } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import {
@@ -97,6 +98,7 @@ export default async function ConversationsPage({
 
   return (
     <AppShell title={d.conversations.title} eyebrow={d.conversations.eyebrow} activeNav="conversations">
+      <AutoRefresh />
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <Panel title={d.conversations.lanesTitle} subtitle={d.conversations.lanesSubtitle}>
           <div className="space-y-3">

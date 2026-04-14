@@ -365,7 +365,7 @@ export function AppointmentScheduler({
         {error ? <p className="pill pill-tertiary mt-4">{error}</p> : null}
 
         {activeForm === "appointment" ? (
-          <form className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4" action={submitAppointment}>
+          <form className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4" action={submitAppointment} data-auto-refresh-pause="true">
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.customer}</span>
               <select className="input-field" name="customer_id" defaultValue={editingAppointment?.customer_id} disabled={Boolean(editingAppointment)} required>
@@ -431,7 +431,7 @@ export function AppointmentScheduler({
         ) : null}
 
         {activeForm === "block" ? (
-          <form className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5" action={submitBlock}>
+          <form className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5" action={submitBlock} data-auto-refresh-pause="true">
             <label className="grid gap-2">
               <span className="stat-label">{copy.fields.barber}</span>
               <select className="input-field" name="barber_id" required>

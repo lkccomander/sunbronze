@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { EmptyState, InitialsAvatar, Panel, StatCard } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import {
@@ -347,6 +348,7 @@ export default async function DashboardPage() {
 
   return (
     <AppShell title={d.dashboard.title} eyebrow={d.dashboard.eyebrow} activeNav="dashboard">
+      <AutoRefresh />
       <div className="grid gap-5 md:grid-cols-4">
         <StatCard label={d.dashboard.stats.appointmentsToday} value={String(appointments.length)} tone="accent" />
         <StatCard label={d.dashboard.stats.inChair} value={String(inChair)} />
