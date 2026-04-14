@@ -286,7 +286,8 @@
       "messages": "Messages",
       "failedSends": "Failed Sends",
       "humanHandoffs": "Human Handoffs",
-      "pendingReminders": "Pending Reminders"
+      "pendingReminders": "Pending Reminders",
+      "databaseSize": "DB Size"
     },
     "emptyTitle": "Dev auth or API data not available",
     "emptyBody": "This report page logs in with SUNBRONZE_DEV_EMAIL and SUNBRONZE_DEV_PASSWORD on the server, then reads the protected WhatsApp endpoints. Add those values in frontend/.env.local if the defaults are not valid for your environment.",
@@ -296,6 +297,11 @@
     "conversationsSubtitle": "Conversation states and intent transitions for WhatsApp interactions.",
     "remindersTitle": "app.reminder_jobs",
     "remindersSubtitle": "Reminder queue visibility for WhatsApp-linked appointment notifications.",
+    "databaseSizeTitle": "Database size",
+    "databaseSizeSubtitle": "Current distribution by table, including data and indexes.",
+    "databaseTotal": "DB total",
+    "emptyDatabaseTitle": "Could not read database size",
+    "emptyDatabaseBody": "This protected endpoint requires a compatible PostgreSQL connection.",
     "headers": {
       "created": "Created",
       "direction": "Direction",
@@ -313,7 +319,10 @@
       "type": "Type",
       "attempts": "Attempts",
       "processed": "Processed",
-      "appointment": "Appointment"
+      "appointment": "Appointment",
+      "table": "Table",
+      "size": "Size",
+      "percentage": "Percentage"
     }
   }
 }

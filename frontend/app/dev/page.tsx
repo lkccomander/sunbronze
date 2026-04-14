@@ -2,11 +2,15 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, Panel, StatCard } from "@/components/ui";
 import {
   type ConversationStateSummary,
+  type DatabaseSizeReport,
+  type DatabaseTableSizeSummary,
   type ReminderJobSummary,
   type WhatsAppMessageSummary,
   fetchProtectedApiJson,
 } from "@/lib/api";
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
+
+const CHART_COLORS = ["#5b7cfa", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#eab308", "#f97316", "#a855f7"];
 
 function formatTimestamp(value: string | null, locale: string, emptyLabel: string): string {
   if (!value) {
@@ -17,27 +21,46 @@ function formatTimestamp(value: string | null, locale: string, emptyLabel: strin
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString(locale);
 }
 
+function databaseChartBackground(tables: DatabaseTableSizeSummary[]): string {
+  const total = tables.reduce((sum, table) => sum + table.total_bytes, 0);
+  if (total <= 0) {
+    return "conic-gradient(var(--color-surface-container-high) 0deg 360deg)";
+  }
+
+  let cursor = 0;
+  const stops = tables.map((table, index) => {
+    const start = cursor;
+    const end = cursor + (table.total_bytes / total) * 360;
+    cursor = end;
+    return `${CHART_COLORS[index % CHART_COLORS.length]} ${start}deg ${end}deg`;
+  });
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
 export default async function DevPage() {
   const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
-  const [messages, conversations, reminders] = await Promise.all([
+  const [messages, conversations, reminders, databaseSize] = await Promise.all([
     fetchProtectedApiJson<WhatsAppMessageSummary[]>("/api/whatsapp/messages"),
     fetchProtectedApiJson<ConversationStateSummary[]>("/api/whatsapp/conversations"),
     fetchProtectedApiJson<ReminderJobSummary[]>("/api/whatsapp/reminders"),
+    fetchProtectedApiJson<DatabaseSizeReport>("/api/dev/database-size"),
   ]);
 
   const totalMessages = messages?.length ?? 0;
   const failedMessages = messages?.filter((item) => item.status === "failed").length ?? 0;
   const humanHandoffs = conversations?.filter((item) => item.handed_off_to_human).length ?? 0;
   const pendingReminders = reminders?.filter((item) => item.status === "pending").length ?? 0;
+  const databaseTables = databaseSize?.tables ?? [];
   const authReady = Boolean(messages && conversations && reminders);
 
   return (
     <AppShell title={d.dev.title} eyebrow={d.dev.eyebrow} activeNav="dev">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <StatCard label={d.dev.stats.messages} value={String(totalMessages)} tone="accent" />
         <StatCard label={d.dev.stats.failedSends} value={String(failedMessages)} />
         <StatCard label={d.dev.stats.humanHandoffs} value={String(humanHandoffs)} tone="soft" />
         <StatCard label={d.dev.stats.pendingReminders} value={String(pendingReminders)} />
+        <StatCard label={d.dev.stats.databaseSize} value={databaseSize?.total_label ?? d.common.none} tone="accent" />
       </div>
 
       {!authReady ? (
@@ -50,6 +73,44 @@ export default async function DevPage() {
       ) : null}
 
       <div className="mt-6 grid gap-6">
+        <Panel title={d.dev.databaseSizeTitle} subtitle={d.dev.databaseSizeSubtitle}>
+          {databaseSize && databaseTables.length > 0 ? (
+            <div className="grid gap-6 xl:grid-cols-[320px_1fr] xl:items-center">
+              <div className="relative mx-auto flex size-64 items-center justify-center rounded-full" style={{ background: databaseChartBackground(databaseTables) }} aria-label={d.dev.databaseSizeTitle}>
+                <div className="flex size-40 flex-col items-center justify-center rounded-full bg-[var(--color-surface)] text-center shadow-[inset_0_0_0_1px_var(--color-surface-container-high)]">
+                  <span className="stat-label">{d.dev.databaseTotal}</span>
+                  <span className="mt-2 text-2xl font-semibold text-[var(--color-on-surface)]">{databaseSize.total_label}</span>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="text-xs uppercase tracking-[0.25em] text-ink/45">
+                    <tr>
+                      <th className="px-3 py-3">{d.dev.headers.table}</th>
+                      <th className="px-3 py-3">{d.dev.headers.size}</th>
+                      <th className="px-3 py-3">{d.dev.headers.percentage}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {databaseTables.map((table, index) => (
+                      <tr key={`${table.schema_name}.${table.table_name}`} className="border-t border-ink/8">
+                        <td className="px-3 py-3">
+                          <span className="mr-2 inline-block size-3 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                          {table.schema_name}.{table.table_name}
+                        </td>
+                        <td className="px-3 py-3">{table.total_label}</td>
+                        <td className="px-3 py-3">{table.percentage.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <EmptyState title={d.dev.emptyDatabaseTitle} body={d.dev.emptyDatabaseBody} />
+          )}
+        </Panel>
+
         <Panel title={d.dev.messagesTitle} subtitle={d.dev.messagesSubtitle}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">

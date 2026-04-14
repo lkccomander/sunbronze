@@ -25,3 +25,9 @@ def require_staff_user(current_user: AuthenticatedUser = Depends(get_current_use
     if not user_has_any_role(current_user, "owner", "admin", "receptionist", "barber"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role permissions.")
     return current_user
+
+
+def require_admin_user(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    if not user_has_any_role(current_user, "owner", "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role permissions.")
+    return current_user

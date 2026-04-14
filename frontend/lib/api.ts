@@ -70,6 +70,22 @@ export type ReminderJobSummary = {
   processed_at: string | null;
 };
 
+export type DatabaseTableSizeSummary = {
+  schema_name: string;
+  table_name: string;
+  total_bytes: number;
+  data_bytes: number;
+  index_bytes: number;
+  total_label: string;
+  percentage: number;
+};
+
+export type DatabaseSizeReport = {
+  total_bytes: number;
+  total_label: string;
+  tables: DatabaseTableSizeSummary[];
+};
+
 export type AppointmentSummary = {
   id: string;
   customer_id: string;
