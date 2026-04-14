@@ -15,6 +15,13 @@ import {
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
 
 const BUSINESS_TIME_ZONE = "America/Costa_Rica";
+const DONUT_COLORS = ["#5b7cfa", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#eab308"];
+
+type DonutItem = {
+  label: string;
+  value: number;
+  displayValue: string;
+};
 
 function businessDateParts(value: Date): { day: number; month: number; year: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -83,7 +90,7 @@ function formatTime(value: string | null, locale: string, fallback: string): str
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? fallback
-    : new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone: BUSINESS_TIME_ZONE }).format(date);
+    : new Intl.DateTimeFormat(locale, { hour: "numeric", hour12: true, minute: "2-digit", timeZone: BUSINESS_TIME_ZONE }).format(date);
 }
 
 function customerName(customer: CustomerSummary | undefined, fallback: string): string {
@@ -91,6 +98,17 @@ function customerName(customer: CustomerSummary | undefined, fallback: string): 
     return fallback;
   }
   return customer.display_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.whatsapp_phone_e164;
+}
+
+function formatPrice(service: ServiceSummary | undefined, fallback: string): string {
+  if (service?.price_cents === null || service?.price_cents === undefined) {
+    return `${service?.currency_code || "CRC"} ${fallback}`;
+  }
+  return `${service.currency_code} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(service.price_cents)}`;
+}
+
+function formatCurrencyAmount(value: number, currencyCode = "CRC"): string {
+  return `${currencyCode} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)}`;
 }
 
 function appointmentCountsByMonth(appointments: AppointmentSummary[]): number[] {
@@ -115,6 +133,115 @@ function monthLabels(locale: string): string[] {
     new Intl.DateTimeFormat(locale, { month: "short", timeZone: BUSINESS_TIME_ZONE }).format(
       businessDateStartUtc(today.year, index + 1, 1),
     ),
+  );
+}
+
+function sortedDonutItems(items: Map<string, DonutItem>): DonutItem[] {
+  return [...items.values()].sort((first, second) => second.value - first.value).slice(0, 6);
+}
+
+function distributionByService(appointments: AppointmentSummary[], serviceById: Map<string, ServiceSummary>, fallback: string): DonutItem[] {
+  const items = new Map<string, DonutItem>();
+  for (const appointment of appointments) {
+    const service = serviceById.get(appointment.service_id);
+    const label = service?.name || fallback;
+    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "" };
+    current.value += 1;
+    current.displayValue = String(current.value);
+    items.set(appointment.service_id, current);
+  }
+  return sortedDonutItems(items);
+}
+
+function distributionBySpecialist(appointments: AppointmentSummary[], barberById: Map<string, string>, fallback: string): DonutItem[] {
+  const items = new Map<string, DonutItem>();
+  for (const appointment of appointments) {
+    const key = appointment.barber_id || "unassigned";
+    const label = appointment.barber_id ? barberById.get(appointment.barber_id) || fallback : fallback;
+    const current = items.get(key) || { label, value: 0, displayValue: "" };
+    current.value += 1;
+    current.displayValue = String(current.value);
+    items.set(key, current);
+  }
+  return sortedDonutItems(items);
+}
+
+function revenueByService(appointments: AppointmentSummary[], serviceById: Map<string, ServiceSummary>, fallback: string): DonutItem[] {
+  const items = new Map<string, DonutItem>();
+  for (const appointment of appointments) {
+    const service = serviceById.get(appointment.service_id);
+    const label = service?.name || fallback;
+    const revenue = service?.price_cents || 0;
+    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "" };
+    current.value += revenue;
+    current.displayValue = formatCurrencyAmount(current.value, service?.currency_code || "CRC");
+    items.set(appointment.service_id, current);
+  }
+  return sortedDonutItems(items);
+}
+
+function donutBackground(items: DonutItem[]): string {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  if (total <= 0) {
+    return "conic-gradient(var(--color-surface-container-high) 0deg 360deg)";
+  }
+
+  let cursor = 0;
+  const stops = items.map((item, index) => {
+    const start = cursor;
+    const end = cursor + (item.value / total) * 360;
+    cursor = end;
+    return `${DONUT_COLORS[index % DONUT_COLORS.length]} ${start}deg ${end}deg`;
+  });
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
+function DonutPanel({
+  title,
+  subtitle,
+  items,
+  emptyLabel,
+  centerValue,
+}: {
+  title: string;
+  subtitle: string;
+  items: DonutItem[];
+  emptyLabel: string;
+  centerValue?: string;
+}) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  const topItem = items[0];
+  const topPercentage = topItem && total > 0 ? `${Math.round((topItem.value / total) * 100)}%` : "0%";
+  const center = centerValue || topPercentage;
+
+  return (
+    <section className="app-panel">
+      <div className="app-panel-header">
+        <h3 className="app-panel-title">{title}</h3>
+        <p className="app-panel-subtitle mt-1">{subtitle}</p>
+      </div>
+      {total > 0 ? (
+        <div className="mt-6 grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
+          <div className="relative mx-auto flex size-44 items-center justify-center rounded-full" style={{ background: donutBackground(items) }} aria-hidden="true">
+            <div className="flex size-28 flex-col items-center justify-center rounded-full bg-[var(--color-surface)] text-center shadow-[inset_0_0_0_1px_var(--color-surface-container-high)]">
+              <span className="text-2xl font-semibold text-[var(--color-on-surface)]">{center}</span>
+              <span className="mt-1 max-w-20 truncate text-xs text-[var(--color-outline)]">{topItem?.label}</span>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {items.map((item, index) => (
+              <div key={item.label} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm">
+                <span className="size-3 rounded-full" style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }} />
+                <span className="truncate font-medium text-[var(--color-on-surface)]">{item.label}</span>
+                <span className="text-xs font-semibold text-[var(--color-outline)]">{item.displayValue}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyState title={emptyLabel} body="" />
+      )}
+    </section>
   );
 }
 
@@ -150,12 +277,17 @@ export default async function DashboardPage() {
   const sessionToken = (await cookies()).get(AUTH_COOKIE_NAME)?.value ?? null;
   const { appointments, yearlyAppointments, barbers, customers, conversations, services } = await loadDashboardData(sessionToken);
   const customerById = new Map(customers.map((item) => [item.id, item]));
-  const serviceById = new Map(services.map((item) => [item.id, item.name]));
+  const serviceById = new Map(services.map((item) => [item.id, item]));
+  const barberById = new Map(barbers.map((item) => [item.id, item.display_name]));
   const pendingConversations = conversations.filter((item) => item.handed_off_to_human || item.assigned_staff_user_id === null);
   const inChair = appointments.filter((item) => item.status === "checked_in").length;
   const monthlyAppointments = appointmentCountsByMonth(yearlyAppointments);
   const monthlyLabels = monthLabels(locale);
   const highestMonthlyCount = Math.max(...monthlyAppointments, 1);
+  const serviceDistribution = distributionByService(yearlyAppointments, serviceById, d.common.service);
+  const specialistDistribution = distributionBySpecialist(yearlyAppointments, barberById, d.common.unassignedBarber);
+  const serviceRevenue = revenueByService(yearlyAppointments, serviceById, d.common.service);
+  const totalServiceRevenue = serviceRevenue.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <AppShell title={d.dashboard.title} eyebrow={d.dashboard.eyebrow} activeNav="dashboard">
@@ -198,22 +330,58 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        <DonutPanel
+          title={d.dashboard.serviceDistributionTitle}
+          subtitle={d.dashboard.serviceDistributionSubtitle}
+          items={serviceDistribution}
+          emptyLabel={d.dashboard.emptyDonutTitle}
+        />
+        <DonutPanel
+          title={d.dashboard.specialistDistributionTitle}
+          subtitle={d.dashboard.specialistDistributionSubtitle}
+          items={specialistDistribution}
+          emptyLabel={d.dashboard.emptyDonutTitle}
+        />
+        <DonutPanel
+          title={d.dashboard.serviceRevenueTitle}
+          subtitle={d.dashboard.serviceRevenueSubtitle}
+          items={serviceRevenue}
+          emptyLabel={d.dashboard.emptyDonutTitle}
+          centerValue={formatCurrencyAmount(totalServiceRevenue)}
+        />
+      </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Panel title={d.dashboard.appointmentsTitle} subtitle={d.dashboard.appointmentsSubtitle}>
-          <div className="grid gap-4">
-            {appointments.map((item) => (
-              <article key={item.id} className="flex items-start gap-4 rounded-[var(--radius-lg)] p-4 transition hover:bg-[var(--color-surface-container-low)]">
-                <span className="material-symbols-outlined icon-lg text-[var(--color-primary)]" aria-hidden="true">
-                  calendar_month
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[var(--color-on-surface)]">{customerName(customerById.get(item.customer_id), d.common.customer)}</p>
-                  <p className="body-muted mt-1">{serviceById.get(item.service_id) || d.common.service}</p>
-                </div>
-                <p className="shrink-0 text-xs text-[var(--color-outline)]">{formatTime(item.scheduled_start_at, locale, d.common.none)}</p>
-              </article>
-            ))}
-          </div>
+          {appointments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="stat-label border-b border-[var(--color-surface-container-high)]">
+                  <tr>
+                    <th className="py-3 pr-4">{d.dashboard.appointmentsTable.customer}</th>
+                    <th className="py-3 pr-4">{d.dashboard.appointmentsTable.service}</th>
+                    <th className="py-3 pr-4">{d.dashboard.appointmentsTable.time}</th>
+                    <th className="py-3 pr-4">{d.dashboard.appointmentsTable.price}</th>
+                    <th className="py-3">{d.dashboard.appointmentsTable.specialist}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.map((item) => {
+                    const service = serviceById.get(item.service_id);
+                    return (
+                      <tr key={item.id} className="border-b border-[var(--color-surface-container-high)] last:border-b-0">
+                        <td className="py-4 pr-4 font-semibold text-[var(--color-on-surface)]">{customerName(customerById.get(item.customer_id), d.common.customer)}</td>
+                        <td className="py-4 pr-4 text-[var(--color-on-surface-variant)]">{service?.name || d.common.service}</td>
+                        <td className="py-4 pr-4 text-[var(--color-outline)]">{formatTime(item.scheduled_start_at, locale, d.common.none)}</td>
+                        <td className="py-4 pr-4 font-semibold text-emerald-400">{formatPrice(service, "-")}</td>
+                        <td className="py-4 text-[var(--color-on-surface-variant)]">{item.barber_id ? barberById.get(item.barber_id) || d.common.assignedBarber : d.common.unassignedBarber}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
           {appointments.length === 0 ? <EmptyState title={d.dashboard.emptyAppointmentsTitle} body={d.dashboard.emptyAppointmentsBody} /> : null}
         </Panel>
         <Panel title={d.dashboard.staffTitle} subtitle={d.dashboard.staffSubtitle}>
