@@ -311,11 +311,18 @@
     "availabilityDate": "Fecha",
     "availabilityBarber": "Especialista",
     "availabilityAnyBarber": "Cualquiera disponible",
+    "availabilityMode": "Mostrar",
+    "availabilityModeAvailable": "Disponibles",
+    "availabilityModeOccupied": "Ocupadas",
+    "availabilityModeAll": "Todo",
     "availabilityRun": "Probar disponibilidad",
     "availabilityEmptyTitle": "No hay slots disponibles",
     "availabilityEmptyBody": "El motor no devolvió horarios para esos parámetros.",
     "availabilityError": "No se pudo consultar la disponibilidad.",
     "availabilityRequest": "Request",
+    "availabilityStatusAvailable": "Disponible",
+    "availabilityStatusOccupied": "Ocupada",
+    "availabilityAssignmentEmpty": "Sin asignación",
     "headers": {
       "created": "Creado",
       "direction": "Dirección",
@@ -339,8 +346,10 @@
       "percentage": "Porcentaje",
       "start": "Inicio",
       "end": "Fin",
+      "service": "Servicio",
       "barber": "Especialista",
-      "resource": "Recurso"
+      "resource": "Recurso",
+      "assignment": "Asignación"
     }
   }
 }

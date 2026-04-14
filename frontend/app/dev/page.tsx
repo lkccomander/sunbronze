@@ -7,6 +7,7 @@ import {
   type DatabaseSizeReport,
   type DatabaseTableSizeSummary,
   type ReminderJobSummary,
+  type ResourceSummary,
   type ServiceSummary,
   type WhatsAppMessageSummary,
   fetchApiJson,
@@ -43,13 +44,14 @@ function databaseChartBackground(tables: DatabaseTableSizeSummary[]): string {
 
 export default async function DevPage() {
   const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
-  const [messages, conversations, reminders, databaseSize, services, barbers] = await Promise.all([
+  const [messages, conversations, reminders, databaseSize, services, barbers, resources] = await Promise.all([
     fetchProtectedApiJson<WhatsAppMessageSummary[]>("/api/whatsapp/messages"),
     fetchProtectedApiJson<ConversationStateSummary[]>("/api/whatsapp/conversations"),
     fetchProtectedApiJson<ReminderJobSummary[]>("/api/whatsapp/reminders"),
     fetchProtectedApiJson<DatabaseSizeReport>("/api/dev/database-size"),
     fetchApiJson<ServiceSummary[]>("/api/services?is_active=true&limit=200").catch(() => []),
     fetchApiJson<BarberSummary[]>("/api/barbers?is_active=true&limit=200").catch(() => []),
+    fetchApiJson<ResourceSummary[]>("/api/resources?is_active=true&limit=200").catch(() => []),
   ]);
 
   const totalMessages = messages?.length ?? 0;
@@ -80,7 +82,7 @@ export default async function DevPage() {
 
       <div className="mt-6 grid gap-6">
         <Panel title={d.dev.availabilityTesterTitle} subtitle={d.dev.availabilityTesterSubtitle}>
-          <DevAvailabilityTester services={services} barbers={barbers} copy={d.dev} common={d.common} locale={locale} />
+          <DevAvailabilityTester services={services} barbers={barbers} resources={resources} copy={d.dev} common={d.common} locale={locale} />
         </Panel>
 
         <Panel title={d.dev.databaseSizeTitle} subtitle={d.dev.databaseSizeSubtitle}>

@@ -311,11 +311,18 @@
     "availabilityDate": "Date",
     "availabilityBarber": "Specialist",
     "availabilityAnyBarber": "Any available",
+    "availabilityMode": "Show",
+    "availabilityModeAvailable": "Available",
+    "availabilityModeOccupied": "Occupied",
+    "availabilityModeAll": "All",
     "availabilityRun": "Test availability",
     "availabilityEmptyTitle": "No slots available",
     "availabilityEmptyBody": "The engine did not return time slots for those parameters.",
     "availabilityError": "Could not query availability.",
     "availabilityRequest": "Request",
+    "availabilityStatusAvailable": "Available",
+    "availabilityStatusOccupied": "Occupied",
+    "availabilityAssignmentEmpty": "Unassigned",
     "headers": {
       "created": "Created",
       "direction": "Direction",
@@ -339,8 +346,10 @@
       "percentage": "Percentage",
       "start": "Start",
       "end": "End",
+      "service": "Service",
       "barber": "Specialist",
-      "resource": "Resource"
+      "resource": "Resource",
+      "assignment": "Assignment"
     }
   }
 }
