@@ -29,3 +29,6 @@ UPDATE app.system_users SET is_active = false WHERE password_hash IS NULL;
 UPDATE app.system_users SET password_hash = '8b41e68aa629ae9f846c1a9365698baf7887314e26ece9397214b0485bcb423e', is_active = true WHERE email IN ('admin@sunbronze.local', 'recepcion@sunbronze.local');
 
 
+select * from app.system_users;
+
+

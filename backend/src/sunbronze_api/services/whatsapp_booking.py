@@ -172,7 +172,7 @@ def _handle_date_choice(db: Session, conversation: Conversation, payload: dict[s
     barber_names = _barber_names_for_slots(db, slots)
     slot_options = []
     lines = []
-    for index, slot in enumerate(slots[:3], start=1):
+    for index, slot in enumerate(slots, start=1):
         barber_name = barber_names.get(str(slot.barber_id)) if slot.barber_id else None
         label = _format_local_time(slot.start_at)
         suffix = f" con {barber_name}" if barber_name and payload.get("any_barber") else ""
