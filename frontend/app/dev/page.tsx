@@ -1,11 +1,15 @@
 import { AppShell } from "@/components/app-shell";
+import { DevAvailabilityTester } from "@/components/dev-availability-tester";
 import { EmptyState, Panel, StatCard } from "@/components/ui";
 import {
+  type BarberSummary,
   type ConversationStateSummary,
   type DatabaseSizeReport,
   type DatabaseTableSizeSummary,
   type ReminderJobSummary,
+  type ServiceSummary,
   type WhatsAppMessageSummary,
+  fetchApiJson,
   fetchProtectedApiJson,
 } from "@/lib/api";
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
@@ -39,11 +43,13 @@ function databaseChartBackground(tables: DatabaseTableSizeSummary[]): string {
 
 export default async function DevPage() {
   const [{ dictionary: d }, locale] = await Promise.all([getRequestDictionary(), getRequestLocale()]);
-  const [messages, conversations, reminders, databaseSize] = await Promise.all([
+  const [messages, conversations, reminders, databaseSize, services, barbers] = await Promise.all([
     fetchProtectedApiJson<WhatsAppMessageSummary[]>("/api/whatsapp/messages"),
     fetchProtectedApiJson<ConversationStateSummary[]>("/api/whatsapp/conversations"),
     fetchProtectedApiJson<ReminderJobSummary[]>("/api/whatsapp/reminders"),
     fetchProtectedApiJson<DatabaseSizeReport>("/api/dev/database-size"),
+    fetchApiJson<ServiceSummary[]>("/api/services?is_active=true&limit=200").catch(() => []),
+    fetchApiJson<BarberSummary[]>("/api/barbers?is_active=true&limit=200").catch(() => []),
   ]);
 
   const totalMessages = messages?.length ?? 0;
@@ -73,6 +79,10 @@ export default async function DevPage() {
       ) : null}
 
       <div className="mt-6 grid gap-6">
+        <Panel title={d.dev.availabilityTesterTitle} subtitle={d.dev.availabilityTesterSubtitle}>
+          <DevAvailabilityTester services={services} barbers={barbers} copy={d.dev} common={d.common} locale={locale} />
+        </Panel>
+
         <Panel title={d.dev.databaseSizeTitle} subtitle={d.dev.databaseSizeSubtitle}>
           {databaseSize && databaseTables.length > 0 ? (
             <div className="grid gap-6 xl:grid-cols-[320px_1fr] xl:items-center">

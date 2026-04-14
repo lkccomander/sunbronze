@@ -305,6 +305,17 @@
     "databaseTotal": "Total DB",
     "emptyDatabaseTitle": "No se pudo leer el tamaño de la base de datos",
     "emptyDatabaseBody": "El endpoint está protegido y requiere una conexión PostgreSQL compatible.",
+    "availabilityTesterTitle": "Test motor de citas",
+    "availabilityTesterSubtitle": "Consulta el mismo motor de disponibilidad que usa el API y el webhook de WhatsApp.",
+    "availabilityService": "Servicio",
+    "availabilityDate": "Fecha",
+    "availabilityBarber": "Especialista",
+    "availabilityAnyBarber": "Cualquiera disponible",
+    "availabilityRun": "Probar disponibilidad",
+    "availabilityEmptyTitle": "No hay slots disponibles",
+    "availabilityEmptyBody": "El motor no devolvió horarios para esos parámetros.",
+    "availabilityError": "No se pudo consultar la disponibilidad.",
+    "availabilityRequest": "Request",
     "headers": {
       "created": "Creado",
       "direction": "Dirección",
@@ -325,7 +336,11 @@
       "appointment": "Cita",
       "table": "Tabla",
       "size": "Tamaño",
-      "percentage": "Porcentaje"
+      "percentage": "Porcentaje",
+      "start": "Inicio",
+      "end": "Fin",
+      "barber": "Especialista",
+      "resource": "Recurso"
     }
   }
 }

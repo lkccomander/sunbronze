@@ -120,6 +120,13 @@ export type AppointmentPayload = {
   internal_notes?: string | null;
 };
 
+export type AvailabilitySlotSummary = {
+  start_at: string;
+  end_at: string;
+  barber_id: string | null;
+  resource_id: string | null;
+};
+
 export type BarberSummary = {
   id: string;
   location_id: string | null;

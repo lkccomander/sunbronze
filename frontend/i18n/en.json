@@ -305,6 +305,17 @@
     "databaseTotal": "DB total",
     "emptyDatabaseTitle": "Could not read database size",
     "emptyDatabaseBody": "This protected endpoint requires a compatible PostgreSQL connection.",
+    "availabilityTesterTitle": "Appointment engine test",
+    "availabilityTesterSubtitle": "Query the same availability engine used by the API and WhatsApp webhook.",
+    "availabilityService": "Service",
+    "availabilityDate": "Date",
+    "availabilityBarber": "Specialist",
+    "availabilityAnyBarber": "Any available",
+    "availabilityRun": "Test availability",
+    "availabilityEmptyTitle": "No slots available",
+    "availabilityEmptyBody": "The engine did not return time slots for those parameters.",
+    "availabilityError": "Could not query availability.",
+    "availabilityRequest": "Request",
     "headers": {
       "created": "Created",
       "direction": "Direction",
@@ -325,7 +336,11 @@
       "appointment": "Appointment",
       "table": "Table",
       "size": "Size",
-      "percentage": "Percentage"
+      "percentage": "Percentage",
+      "start": "Start",
+      "end": "End",
+      "barber": "Specialist",
+      "resource": "Resource"
     }
   }
 }
