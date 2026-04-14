@@ -105,6 +105,8 @@
     "newAppointmentTitle": "Nueva cita",
     "blockTimeTitle": "Bloquear horario",
     "allDay": "Todo el día",
+    "previousPeriod": "Periodo anterior",
+    "nextPeriod": "Periodo siguiente",
     "fields": {
       "customer": "Cliente",
       "service": "Servicio",

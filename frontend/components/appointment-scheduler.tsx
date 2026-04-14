@@ -1,16 +1,19 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import type { AppointmentSummary, BarberSummary, BarberTimeOffSummary, CustomerSummary, ResourceSummary, ServiceSummary } from "@/lib/api";
 import {
   BUSINESS_TIME_ZONE,
+  addBusinessDays,
+  addBusinessMonths,
   businessDateTimeParts,
   businessDateTimeUtc,
   businessInputDateTimeToIso,
   endOfBusinessMonth,
   endOfBusinessWeek,
+  formatBusinessDate,
   formatBusinessInputDateTime,
   startOfBusinessDay,
   startOfBusinessMonth,
@@ -28,6 +31,8 @@ type SchedulerCopy = {
   newAppointmentTitle: string;
   blockTimeTitle: string;
   allDay: string;
+  previousPeriod: string;
+  nextPeriod: string;
   fields: Record<string, string>;
   saveAppointment: string;
   updateAppointment: string;
@@ -147,6 +152,8 @@ export function AppointmentScheduler({
   resources,
   services,
   customers,
+  initialDate,
+  initialViewMode,
   copy,
   common,
   locale,
@@ -157,18 +164,24 @@ export function AppointmentScheduler({
   resources: ResourceSummary[];
   services: ServiceSummary[];
   customers: CustomerSummary[];
+  initialDate: string;
+  initialViewMode: ViewMode;
   copy: SchedulerCopy;
   common: CommonCopy;
   locale: string;
 }) {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [activeForm, setActiveForm] = useState<"appointment" | "block" | null>(null);
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const today = useMemo(() => new Date(), []);
+  const activeDate = useMemo(() => new Date(initialDate), [initialDate]);
+
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode]);
 
   const serviceById = useMemo(() => new Map(services.map((item) => [item.id, item.name])), [services]);
   const tanningResources = useMemo(
@@ -187,20 +200,37 @@ export function AppointmentScheduler({
   );
 
   const visibleAppointments = useMemo(() => {
-    const rangeStart = viewMode === "day" ? startOfDay(today) : viewMode === "week" ? startOfWeek(today) : startOfMonth(today);
-    const rangeEnd = viewMode === "day" ? new Date(rangeStart.getTime() + 86_400_000) : viewMode === "week" ? endOfWeek(today) : endOfMonth(today);
+    const rangeStart = viewMode === "day" ? startOfDay(activeDate) : viewMode === "week" ? startOfWeek(activeDate) : startOfMonth(activeDate);
+    const rangeEnd = viewMode === "day" ? addBusinessDays(rangeStart, 1) : viewMode === "week" ? endOfWeek(activeDate) : endOfMonth(activeDate);
     return initialAppointments
       .filter((item) => isWithinRange(new Date(item.scheduled_start_at), rangeStart, rangeEnd))
       .sort((left, right) => new Date(left.scheduled_start_at).getTime() - new Date(right.scheduled_start_at).getTime());
-  }, [initialAppointments, today, viewMode]);
+  }, [activeDate, initialAppointments, viewMode]);
 
   const visibleTimeOff = useMemo(() => {
-    const rangeStart = viewMode === "day" ? startOfDay(today) : viewMode === "week" ? startOfWeek(today) : startOfMonth(today);
-    const rangeEnd = viewMode === "day" ? new Date(rangeStart.getTime() + 86_400_000) : viewMode === "week" ? endOfWeek(today) : endOfMonth(today);
+    const rangeStart = viewMode === "day" ? startOfDay(activeDate) : viewMode === "week" ? startOfWeek(activeDate) : startOfMonth(activeDate);
+    const rangeEnd = viewMode === "day" ? addBusinessDays(rangeStart, 1) : viewMode === "week" ? endOfWeek(activeDate) : endOfMonth(activeDate);
     return initialTimeOff
       .filter((item) => new Date(item.starts_at) < rangeEnd && new Date(item.ends_at) > rangeStart)
       .sort((left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
-  }, [initialTimeOff, today, viewMode]);
+  }, [activeDate, initialTimeOff, viewMode]);
+
+  function setScheduleView(mode: ViewMode) {
+    setViewMode(mode);
+    startTransition(() => router.push(`/appointments?date=${formatBusinessDate(activeDate)}&view=${mode}`));
+  }
+
+  function shiftSchedule(direction: -1 | 1) {
+    const nextDate =
+      viewMode === "day"
+        ? addBusinessDays(activeDate, direction)
+        : viewMode === "week"
+          ? addBusinessDays(activeDate, direction * 7)
+          : addBusinessMonths(activeDate, direction);
+    setActiveForm(null);
+    setEditingAppointmentId(null);
+    startTransition(() => router.push(`/appointments?date=${formatBusinessDate(nextDate)}&view=${viewMode}`));
+  }
 
   async function submitAppointment(formData: FormData) {
     setError(null);
@@ -296,7 +326,7 @@ export function AppointmentScheduler({
     startTransition(() => router.refresh());
   }
 
-  const todayParts = businessDateTimeParts(today);
+  const todayParts = businessDateTimeParts(activeDate);
   const defaultStart = toInputDateTime(businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, 10));
   const defaultEnd = toInputDateTime(businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, 11));
   const formStart = editingAppointment ? toInputDateTime(new Date(editingAppointment.scheduled_start_at)) : defaultStart;
@@ -308,11 +338,17 @@ export function AppointmentScheduler({
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-surface-container-high)] pb-5">
           <div>
             <p className="stat-label">{viewMode === "day" ? copy.currentDay : viewMode === "week" ? copy.currentWeek : copy.currentMonth}</p>
-            <h3 className="mt-2 font-display text-3xl leading-none">{formatDayTitle(today, locale)}</h3>
+            <h3 className="mt-2 font-display text-3xl leading-none">{formatDayTitle(activeDate, locale)}</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => shiftSchedule(-1)} disabled={isPending} aria-label={copy.previousPeriod}>
+              &lt;
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => shiftSchedule(1)} disabled={isPending} aria-label={copy.nextPeriod}>
+              &gt;
+            </button>
             {(["day", "week", "month"] as const).map((mode) => (
-              <button key={mode} type="button" className={`btn btn-sm ${viewMode === mode ? "btn-primary" : "btn-ghost"}`} onClick={() => setViewMode(mode)}>
+              <button key={mode} type="button" className={`btn btn-sm ${viewMode === mode ? "btn-primary" : "btn-ghost"}`} onClick={() => setScheduleView(mode)}>
                 {mode === "day" ? copy.dailyView : mode === "week" ? copy.weeklyView : copy.monthlyView}
               </button>
             ))}
@@ -427,9 +463,9 @@ export function AppointmentScheduler({
         ) : null}
 
         {viewMode === "day" ? (
-          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} resources={tanningResources} serviceById={serviceById} customerById={customerById} barberById={barberById} resourceById={resourceById} today={today} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
+          <DayBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} resources={tanningResources} serviceById={serviceById} customerById={customerById} barberById={barberById} resourceById={resourceById} today={activeDate} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         ) : (
-          <SummaryBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={today} viewMode={viewMode} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
+          <SummaryBoard appointments={visibleAppointments} timeOff={visibleTimeOff} barbers={barbers} serviceById={serviceById} customerById={customerById} barberById={barberById} today={activeDate} viewMode={viewMode} locale={locale} common={common} copy={copy} onEditAppointment={openAppointmentForm} onCancelAppointment={cancelAppointment} />
         )}
       </section>
     </div>

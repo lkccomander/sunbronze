@@ -54,6 +54,13 @@ export function addBusinessDays(value: Date, days: number): Date {
   return businessDateTimeUtc(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
 
+export function addBusinessMonths(value: Date, months: number): Date {
+  const parts = businessDateTimeParts(value);
+  const date = new Date(Date.UTC(parts.year, parts.month - 1 + months, 1));
+  const lastDayOfTargetMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  return businessDateTimeUtc(date.getUTCFullYear(), date.getUTCMonth() + 1, Math.min(parts.day, lastDayOfTargetMonth));
+}
+
 export function startOfBusinessWeek(value: Date): Date {
   const date = startOfBusinessDay(value);
   const parts = businessDateTimeParts(date);
@@ -80,6 +87,23 @@ export function endOfBusinessMonth(value: Date): Date {
 export function formatBusinessInputDateTime(value: Date): string {
   const parts = businessDateTimeParts(value);
   return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+export function formatBusinessDate(value: Date): string {
+  const parts = businessDateTimeParts(value);
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
+}
+
+export function businessDateParamToDate(value: string | undefined): Date | null {
+  if (!value) {
+    return null;
+  }
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  return businessDateTimeUtc(Number(match[1]), Number(match[2]), Number(match[3]));
 }
 
 export function businessInputDateTimeToIso(value: string): string {

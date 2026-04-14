@@ -105,6 +105,8 @@
     "newAppointmentTitle": "New appointment",
     "blockTimeTitle": "Block time",
     "allDay": "All day",
+    "previousPeriod": "Previous period",
+    "nextPeriod": "Next period",
     "fields": {
       "customer": "Customer",
       "service": "Service",
