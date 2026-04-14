@@ -530,6 +530,8 @@ def _first_available_resource(db: Session, resource_ids: list[UUID], start_at: d
 def _within_working_hours(db: Session, model, id_column, entity_id: UUID, start_at: datetime, end_at: datetime) -> bool:
     local_start_at = _to_business_time(start_at)
     local_end_at = _to_business_time(end_at)
+    if local_start_at.date() != local_end_at.date():
+        return False
     local_weekday = _business_weekday(local_start_at)
     start_time = _time_for_schedule(local_start_at)
     end_time = _time_for_schedule(local_end_at)
