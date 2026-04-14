@@ -564,7 +564,7 @@ function DayBoard({
                     return null;
                   }
                   const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
-                  const height = Math.max(96, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR));
+                  const height = Math.max(42, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR) - 4);
                   return (
                     <article key={item.id} className={`absolute left-2 right-2 overflow-hidden rounded-[var(--radius-lg)] border p-3 shadow-sm ${appointmentCardClasses(item.status.toLowerCase())}`} style={{ top, height }}>
                       <div className="flex flex-wrap items-center gap-2">
