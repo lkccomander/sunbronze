@@ -34,6 +34,7 @@ from sunbronze_api.services.whatsapp import enqueue_default_reminder_jobs
 
 BUSINESS_TIME_ZONE = ZoneInfo("America/Costa_Rica")
 WEEKDAY_NAMES = ("domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado")
+SLOT_INTERVAL_MINUTES = 30
 
 
 def list_appointments(db: Session, filters: AppointmentListQuery) -> list[AppointmentSummary]:
@@ -278,11 +279,11 @@ def list_available_slots(db: Session, filters: AppointmentAvailabilityQuery) -> 
             if service.requires_resource:
                 resource_id = _first_available_resource(db, target_resource_ids, cursor, slot_end)
                 if resource_id is None:
-                    cursor += timedelta(minutes=30)
+                    cursor = _next_slot_cursor(cursor, duration_minutes)
                     continue
             slots.append(AvailabilitySlot(start_at=cursor, end_at=slot_end, barber_id=None, resource_id=resource_id))
 
-        cursor += timedelta(minutes=30)
+        cursor = _next_slot_cursor(cursor, duration_minutes)
 
     return slots
 
@@ -357,6 +358,17 @@ def _resolve_duration_minutes(db: Session, service: Service, barber_id: UUID | N
         if assignment and assignment.custom_duration_minutes:
             duration_minutes = assignment.custom_duration_minutes
     return duration_minutes
+
+
+def _next_slot_cursor(start_at: datetime, duration_minutes: int) -> datetime:
+    next_start = start_at + timedelta(minutes=duration_minutes)
+    if next_start.second or next_start.microsecond:
+        next_start = next_start + timedelta(minutes=1)
+    next_start = next_start.replace(second=0, microsecond=0)
+    remainder = next_start.minute % SLOT_INTERVAL_MINUTES
+    if remainder:
+        next_start += timedelta(minutes=SLOT_INTERVAL_MINUTES - remainder)
+    return next_start
 
 
 def _build_appointment_timing(
