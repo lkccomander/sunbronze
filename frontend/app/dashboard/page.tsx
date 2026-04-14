@@ -104,11 +104,11 @@ function formatPrice(service: ServiceSummary | undefined, fallback: string): str
   if (service?.price_cents === null || service?.price_cents === undefined) {
     return `${service?.currency_code || "CRC"} ${fallback}`;
   }
-  return `${service.currency_code} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(service.price_cents)}`;
+  return `${service.currency_code} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(service.price_cents / 100)}`;
 }
 
 function formatCurrencyAmount(value: number, currencyCode = "CRC"): string {
-  return `${currencyCode} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)}`;
+  return `${currencyCode} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value / 100)}`;
 }
 
 function appointmentCountsByMonth(appointments: AppointmentSummary[]): number[] {
