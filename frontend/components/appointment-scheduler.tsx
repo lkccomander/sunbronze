@@ -4,6 +4,18 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import type { AppointmentSummary, BarberSummary, BarberTimeOffSummary, CustomerSummary, ResourceSummary, ServiceSummary } from "@/lib/api";
+import {
+  BUSINESS_TIME_ZONE,
+  businessDateTimeParts,
+  businessDateTimeUtc,
+  businessInputDateTimeToIso,
+  endOfBusinessMonth,
+  endOfBusinessWeek,
+  formatBusinessInputDateTime,
+  startOfBusinessDay,
+  startOfBusinessMonth,
+  startOfBusinessWeek,
+} from "@/lib/business-time";
 
 type SchedulerCopy = {
   dailyView: string;
@@ -51,45 +63,42 @@ const MINUTES_PER_HOUR = 60;
 const HOUR_HEIGHT_PX = 76;
 
 function startOfDay(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  return startOfBusinessDay(value);
 }
 
 function startOfWeek(value: Date): Date {
-  const date = startOfDay(value);
-  const dayOffset = (date.getDay() + 6) % 7;
-  date.setDate(date.getDate() - dayOffset);
-  return date;
+  return startOfBusinessWeek(value);
 }
 
 function endOfWeek(value: Date): Date {
-  const date = startOfWeek(value);
-  date.setDate(date.getDate() + 7);
-  return date;
+  return endOfBusinessWeek(value);
 }
 
 function startOfMonth(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), 1);
+  return startOfBusinessMonth(value);
 }
 
 function endOfMonth(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth() + 1, 1);
+  return endOfBusinessMonth(value);
 }
 
 function formatDate(value: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric" }).format(value);
+  return new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric", timeZone: BUSINESS_TIME_ZONE }).format(value);
 }
 
 function formatDayTitle(value: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { weekday: "long", month: "long", day: "numeric" }).format(value);
+  return new Intl.DateTimeFormat(locale, { weekday: "long", month: "long", day: "numeric", timeZone: BUSINESS_TIME_ZONE }).format(value);
 }
 
 function formatTimeRange(start: Date, end: Date, locale: string): string {
-  const formatter = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" });
+  const formatter = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone: BUSINESS_TIME_ZONE });
   return `${formatter.format(start)} - ${formatter.format(end)}`;
 }
 
 function isSameDay(left: Date, right: Date): boolean {
-  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+  const leftParts = businessDateTimeParts(left);
+  const rightParts = businessDateTimeParts(right);
+  return leftParts.year === rightParts.year && leftParts.month === rightParts.month && leftParts.day === rightParts.day;
 }
 
 function isWithinRange(value: Date, start: Date, end: Date): boolean {
@@ -97,12 +106,12 @@ function isWithinRange(value: Date, start: Date, end: Date): boolean {
 }
 
 function minuteOffsetFromDayStart(value: Date): number {
-  return (value.getHours() - DAY_START_HOUR) * MINUTES_PER_HOUR + value.getMinutes();
+  const parts = businessDateTimeParts(value);
+  return (parts.hour - DAY_START_HOUR) * MINUTES_PER_HOUR + parts.minute;
 }
 
 function toInputDateTime(value: Date): string {
-  const offset = value.getTimezoneOffset();
-  return new Date(value.getTime() - offset * 60_000).toISOString().slice(0, 16);
+  return formatBusinessInputDateTime(value);
 }
 
 function endDateTimeForForm(appointment: AppointmentSummary | null, fallback: Date): string {
@@ -197,7 +206,7 @@ export function AppointmentScheduler({
     setError(null);
     setMessage(null);
     const isEditing = editingAppointment !== null;
-    const startAt = new Date(String(formData.get("scheduled_start_at"))).toISOString();
+    const startAt = businessInputDateTimeToIso(String(formData.get("scheduled_start_at")));
     const endAt = String(formData.get("scheduled_end_at") || "");
     const response = await fetch(isEditing ? `/api/appointments/${editingAppointment.id}` : "/api/appointments", {
       method: isEditing ? "PATCH" : "POST",
@@ -209,7 +218,7 @@ export function AppointmentScheduler({
               resource_id: formData.get("resource_id") || null,
               status: formData.get("status") || null,
               scheduled_start_at: startAt,
-              scheduled_end_at: endAt ? new Date(endAt).toISOString() : null,
+              scheduled_end_at: endAt ? businessInputDateTimeToIso(endAt) : null,
               internal_notes: String(formData.get("internal_notes") || "") || null,
             }
           : {
@@ -220,7 +229,7 @@ export function AppointmentScheduler({
               source: "admin_console",
               status: formData.get("status") || "confirmed",
               scheduled_start_at: startAt,
-              scheduled_end_at: endAt ? new Date(endAt).toISOString() : null,
+              scheduled_end_at: endAt ? businessInputDateTimeToIso(endAt) : null,
               internal_notes: String(formData.get("internal_notes") || "") || null,
             },
       ),
@@ -270,8 +279,8 @@ export function AppointmentScheduler({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        starts_at: new Date(String(formData.get("starts_at"))).toISOString(),
-        ends_at: new Date(String(formData.get("ends_at"))).toISOString(),
+        starts_at: businessInputDateTimeToIso(String(formData.get("starts_at"))),
+        ends_at: businessInputDateTimeToIso(String(formData.get("ends_at"))),
         reason: String(formData.get("reason") || "") || null,
         is_all_day: formData.get("is_all_day") === "on",
       }),
@@ -287,10 +296,11 @@ export function AppointmentScheduler({
     startTransition(() => router.refresh());
   }
 
-  const defaultStart = toInputDateTime(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10));
-  const defaultEnd = toInputDateTime(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11));
+  const todayParts = businessDateTimeParts(today);
+  const defaultStart = toInputDateTime(businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, 10));
+  const defaultEnd = toInputDateTime(businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, 11));
   const formStart = editingAppointment ? toInputDateTime(new Date(editingAppointment.scheduled_start_at)) : defaultStart;
-  const formEnd = endDateTimeForForm(editingAppointment, new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11));
+  const formEnd = endDateTimeForForm(editingAppointment, businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, 11));
 
   return (
     <div className="grid gap-6">
@@ -460,6 +470,7 @@ function DayBoard({
   const dayMinutes = (DAY_END_HOUR - DAY_START_HOUR) * MINUTES_PER_HOUR;
   const boardHeight = dayMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
   const hourMarkers = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, index) => DAY_START_HOUR + index);
+  const todayParts = businessDateTimeParts(today);
   const columns: ScheduleColumn[] = [
     ...barbers.map((item) => ({ id: item.id, label: item.display_name, kind: "barber" as const })),
     ...resources.map((item) => ({ id: item.id, label: item.name, kind: "resource" as const })),
@@ -485,7 +496,9 @@ function DayBoard({
             {hourMarkers.map((hour) => (
               <div key={hour} className="absolute left-0 right-0" style={{ top: (hour - DAY_START_HOUR) * HOUR_HEIGHT_PX }}>
                 <div className="px-3 text-xs font-semibold text-[var(--color-outline)]">
-                  {new Intl.DateTimeFormat(locale, { hour: "numeric" }).format(new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour))}
+                  {new Intl.DateTimeFormat(locale, { hour: "numeric", timeZone: BUSINESS_TIME_ZONE }).format(
+                    businessDateTimeUtc(todayParts.year, todayParts.month, todayParts.day, hour),
+                  )}
                 </div>
               </div>
             ))}
@@ -594,7 +607,7 @@ function SummaryBoard({
     const rangeStart = viewMode === "week" ? startOfWeek(today) : startOfMonth(today);
     const rangeEnd = viewMode === "week" ? endOfWeek(today) : endOfMonth(today);
     const nextDays: Date[] = [];
-    for (const cursor = new Date(rangeStart); cursor < rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+    for (const cursor = new Date(rangeStart); cursor < rangeEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
       nextDays.push(new Date(cursor));
     }
     return nextDays;

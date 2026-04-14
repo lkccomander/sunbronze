@@ -13,6 +13,7 @@ type ServicesCopy = {
   createService: string;
   deactivateService: string;
   saveError: string;
+  serviceSaveError?: string;
   saveSuccess: string;
   fields: Record<string, string>;
 };
@@ -77,6 +78,50 @@ function priceToCents(value: string): number | null {
   return Math.round(Number(value) * 100);
 }
 
+function payloadFromFormData(formData: FormData): ServicePayload {
+  return {
+    code: String(formData.get("code") || "").trim(),
+    name: String(formData.get("name") || "").trim(),
+    description: String(formData.get("description") || "").trim() || null,
+    duration_minutes: Number(formData.get("duration_minutes")),
+    buffer_before_minutes: Number(formData.get("buffer_before_minutes")),
+    buffer_after_minutes: Number(formData.get("buffer_after_minutes")),
+    price_cents: priceToCents(String(formData.get("price") || "")),
+    currency_code: String(formData.get("currency_code") || "CRC").trim().toUpperCase(),
+    requires_barber: formData.get("requires_barber") === "on",
+    requires_resource: formData.get("requires_resource") === "on",
+    is_active: formData.get("is_active") === "on",
+  };
+}
+
+function changedServicePayload(payload: ServicePayload, initialService: ServiceSummary): ServicePayload {
+  const next: ServicePayload = {};
+  if (payload.code !== initialService.code) next.code = payload.code;
+  if (payload.name !== initialService.name) next.name = payload.name;
+  if ((payload.description ?? null) !== (initialService.description ?? null)) next.description = payload.description ?? null;
+  if (payload.duration_minutes !== initialService.duration_minutes) next.duration_minutes = payload.duration_minutes;
+  if (payload.buffer_before_minutes !== initialService.buffer_before_minutes) next.buffer_before_minutes = payload.buffer_before_minutes;
+  if (payload.buffer_after_minutes !== initialService.buffer_after_minutes) next.buffer_after_minutes = payload.buffer_after_minutes;
+  if ((payload.price_cents ?? null) !== (initialService.price_cents ?? null)) next.price_cents = payload.price_cents ?? null;
+  if (payload.currency_code !== initialService.currency_code) next.currency_code = payload.currency_code;
+  if (payload.requires_barber !== initialService.requires_barber) next.requires_barber = payload.requires_barber;
+  if (payload.requires_resource !== initialService.requires_resource) next.requires_resource = payload.requires_resource;
+  if (payload.is_active !== initialService.is_active) next.is_active = payload.is_active;
+  return next;
+}
+
+async function errorMessageFromResponse(response: Response, fallback: string): Promise<string> {
+  const payload = await response.json().catch(() => null);
+  if (payload && typeof payload.detail === "string") {
+    return payload.detail;
+  }
+  if (payload && typeof payload.error === "string") {
+    return payload.error;
+  }
+
+  return fallback;
+}
+
 export function ServiceForm({
   initialService,
   copy,
@@ -100,19 +145,9 @@ export function ServiceForm({
     setError(null);
     setMessage(null);
 
-    const payload: ServicePayload = {
-      code: String(formData.get("code") || "").trim(),
-      name: String(formData.get("name") || "").trim(),
-      description: String(formData.get("description") || "").trim() || null,
-      duration_minutes: Number(formData.get("duration_minutes")),
-      buffer_before_minutes: Number(formData.get("buffer_before_minutes")),
-      buffer_after_minutes: Number(formData.get("buffer_after_minutes")),
-      price_cents: priceToCents(String(formData.get("price") || "")),
-      currency_code: String(formData.get("currency_code") || "CRC").trim().toUpperCase(),
-      requires_barber: formData.get("requires_barber") === "on",
-      requires_resource: formData.get("requires_resource") === "on",
-      is_active: formData.get("is_active") === "on",
-    };
+    const fullPayload = payloadFromFormData(formData);
+    const payload = initialService ? changedServicePayload(fullPayload, initialService) : fullPayload;
+    const saveFallback = copy.serviceSaveError || copy.saveError;
 
     const response = await fetch(initialService ? `/api/services/${initialService.id}` : "/api/services", {
       method: initialService ? "PATCH" : "POST",
@@ -121,7 +156,7 @@ export function ServiceForm({
     });
 
     if (!response.ok) {
-      setError(copy.saveError);
+      setError(await errorMessageFromResponse(response, saveFallback));
       return;
     }
 
@@ -141,7 +176,7 @@ export function ServiceForm({
     setMessage(null);
     const response = await fetch(`/api/services/${initialService.id}`, { method: "DELETE" });
     if (!response.ok) {
-      setError(copy.saveError);
+      setError(await errorMessageFromResponse(response, copy.serviceSaveError || copy.saveError));
       return;
     }
 

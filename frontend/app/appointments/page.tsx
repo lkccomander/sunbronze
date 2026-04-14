@@ -4,6 +4,7 @@ import { AppointmentScheduler } from "@/components/appointment-scheduler";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/ui";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import { endOfBusinessMonth, startOfBusinessMonth } from "@/lib/business-time";
 import {
   type AppointmentSummary,
   type BarberSummary,
@@ -25,8 +26,8 @@ async function loadScheduleData(accessToken: string): Promise<{
   timeOff: BarberTimeOffSummary[];
 }> {
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+  const monthStart = startOfBusinessMonth(now).toISOString();
+  const nextMonthStart = endOfBusinessMonth(now).toISOString();
 
   const [appointments, barbers, services, customers, resources] = await Promise.all([
     fetchApiJsonWithToken<AppointmentSummary[]>(`/api/appointments?from=${encodeURIComponent(monthStart)}&start_to=${encodeURIComponent(nextMonthStart)}`, accessToken).catch(() => []),

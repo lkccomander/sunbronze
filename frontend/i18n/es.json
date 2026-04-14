@@ -192,6 +192,7 @@
     "saveHours": "Guardar horario",
     "deleteHours": "Eliminar horario",
     "saveError": "No se pudo guardar el especialista u horario.",
+    "serviceSaveError": "No se pudo guardar el servicio.",
     "saveSuccess": "Cambios guardados.",
     "fields": {
       "code": "Código",

@@ -192,6 +192,7 @@
     "saveHours": "Save hours",
     "deleteHours": "Delete hours",
     "saveError": "Could not save the specialist or hours.",
+    "serviceSaveError": "Could not save the service.",
     "saveSuccess": "Changes saved.",
     "fields": {
       "code": "Code",
