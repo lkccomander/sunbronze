@@ -950,6 +950,37 @@ body {
   animation: fadeSlideUp 0.4s ease forwards;
 }
 
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chartBarRise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.chart-delayed {
+  opacity: 0;
+  animation: chartFadeIn 0.45s ease forwards;
+}
+
+.chart-bar-delayed {
+  transform: scaleY(0);
+  transform-origin: bottom;
+  animation: chartBarRise 0.55s ease forwards;
+}
+
 @media (max-width: 768px) {
   :root {
     --sidebar-width: 0px;

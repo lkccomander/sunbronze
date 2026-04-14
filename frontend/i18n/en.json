@@ -75,8 +75,11 @@
       "price": "Price",
       "specialist": "Specialist"
     },
-    "monthlyAppointmentsTitle": "Appointments by month",
-    "monthlyAppointmentsSubtitle": "Appointment count recorded during the current year.",
+    "monthlyAppointmentsTitle": "Appointments by day",
+    "monthlyAppointmentsSubtitle": "Appointment count recorded by day during the current month.",
+    "monthlyAppointmentsCut": "Cut",
+    "monthlyAppointmentsTanning": "Tanning",
+    "monthlyAppointmentsOther": "Other",
     "serviceDistributionTitle": "Service distribution",
     "serviceDistributionSubtitle": "Current-year appointments grouped by service.",
     "specialistDistributionTitle": "Specialist distribution",

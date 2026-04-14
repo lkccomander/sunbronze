@@ -15,12 +15,27 @@ import {
 import { getRequestDictionary, getRequestLocale } from "@/lib/i18n-server";
 
 const BUSINESS_TIME_ZONE = "America/Costa_Rica";
-const DONUT_COLORS = ["#5b7cfa", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#eab308"];
+const CHART_ANIMATION_DELAY = "3s";
+const SERVICE_CHART_COLORS = {
+  cut: "#22c55e",
+  tanning: "#f59e0b",
+  other: "#5b7cfa",
+};
+const FALLBACK_CHART_COLORS = ["#5b7cfa", "#ef4444", "#14b8a6", "#eab308", "#a855f7", "#38bdf8"];
 
 type DonutItem = {
   label: string;
   value: number;
   displayValue: string;
+  color?: string;
+};
+
+type DailyServiceCount = {
+  day: number;
+  cut: number;
+  tanning: number;
+  other: number;
+  total: number;
 };
 
 function businessDateParts(value: Date): { day: number; month: number; year: number } {
@@ -111,29 +126,67 @@ function formatCurrencyAmount(value: number, currencyCode = "CRC"): string {
   return `${currencyCode} ${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value / 100)}`;
 }
 
-function appointmentCountsByMonth(appointments: AppointmentSummary[]): number[] {
+function normalizeServiceLabel(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function serviceCategory(label: string): "cut" | "tanning" | "other" {
+  const normalized = normalizeServiceLabel(label);
+  if (normalized.includes("corte") || normalized.includes("cut")) {
+    return "cut";
+  }
+  if (normalized.includes("bronceado") || normalized.includes("tanning") || normalized.includes("tan")) {
+    return "tanning";
+  }
+  return "other";
+}
+
+function serviceColor(label: string, fallbackIndex = 0): string {
+  const category = serviceCategory(label);
+  if (category === "cut") {
+    return SERVICE_CHART_COLORS.cut;
+  }
+  if (category === "tanning") {
+    return SERVICE_CHART_COLORS.tanning;
+  }
+  return FALLBACK_CHART_COLORS[fallbackIndex % FALLBACK_CHART_COLORS.length];
+}
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function appointmentCountsByCurrentMonth(
+  appointments: AppointmentSummary[],
+  serviceById: Map<string, ServiceSummary>,
+): DailyServiceCount[] {
   const today = businessDateParts(new Date());
-  const counts = Array.from({ length: 12 }, () => 0);
+  const counts = Array.from({ length: daysInMonth(today.year, today.month) }, (_, index) => ({
+    day: index + 1,
+    cut: 0,
+    tanning: 0,
+    other: 0,
+    total: 0,
+  }));
+
   for (const appointment of appointments) {
     const startsAt = new Date(appointment.scheduled_start_at);
     if (Number.isNaN(startsAt.getTime())) {
       continue;
     }
     const parts = businessDateParts(startsAt);
-    if (parts.year === today.year) {
-      counts[parts.month - 1] += 1;
+    if (parts.year === today.year && parts.month === today.month) {
+      const dayCount = counts[parts.day - 1];
+      const service = serviceById.get(appointment.service_id);
+      const category = serviceCategory(service?.name || "");
+      dayCount[category] += 1;
+      dayCount.total += 1;
     }
   }
   return counts;
-}
-
-function monthLabels(locale: string): string[] {
-  const today = businessDateParts(new Date());
-  return Array.from({ length: 12 }, (_, index) =>
-    new Intl.DateTimeFormat(locale, { month: "short", timeZone: BUSINESS_TIME_ZONE }).format(
-      businessDateStartUtc(today.year, index + 1, 1),
-    ),
-  );
 }
 
 function sortedDonutItems(items: Map<string, DonutItem>): DonutItem[] {
@@ -145,7 +198,7 @@ function distributionByService(appointments: AppointmentSummary[], serviceById: 
   for (const appointment of appointments) {
     const service = serviceById.get(appointment.service_id);
     const label = service?.name || fallback;
-    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "" };
+    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "", color: serviceColor(label, items.size) };
     current.value += 1;
     current.displayValue = String(current.value);
     items.set(appointment.service_id, current);
@@ -158,7 +211,7 @@ function distributionBySpecialist(appointments: AppointmentSummary[], barberById
   for (const appointment of appointments) {
     const key = appointment.barber_id || "unassigned";
     const label = appointment.barber_id ? barberById.get(appointment.barber_id) || fallback : fallback;
-    const current = items.get(key) || { label, value: 0, displayValue: "" };
+    const current = items.get(key) || { label, value: 0, displayValue: "", color: FALLBACK_CHART_COLORS[items.size % FALLBACK_CHART_COLORS.length] };
     current.value += 1;
     current.displayValue = String(current.value);
     items.set(key, current);
@@ -172,7 +225,7 @@ function revenueByService(appointments: AppointmentSummary[], serviceById: Map<s
     const service = serviceById.get(appointment.service_id);
     const label = service?.name || fallback;
     const revenue = service?.price_cents || 0;
-    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "" };
+    const current = items.get(appointment.service_id) || { label, value: 0, displayValue: "", color: serviceColor(label, items.size) };
     current.value += revenue;
     current.displayValue = formatCurrencyAmount(current.value, service?.currency_code || "CRC");
     items.set(appointment.service_id, current);
@@ -191,7 +244,7 @@ function donutBackground(items: DonutItem[]): string {
     const start = cursor;
     const end = cursor + (item.value / total) * 360;
     cursor = end;
-    return `${DONUT_COLORS[index % DONUT_COLORS.length]} ${start}deg ${end}deg`;
+    return `${item.color || FALLBACK_CHART_COLORS[index % FALLBACK_CHART_COLORS.length]} ${start}deg ${end}deg`;
   });
   return `conic-gradient(${stops.join(", ")})`;
 }
@@ -222,7 +275,11 @@ function DonutPanel({
       </div>
       {total > 0 ? (
         <div className="mt-6 grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
-          <div className="relative mx-auto flex size-44 items-center justify-center rounded-full" style={{ background: donutBackground(items) }} aria-hidden="true">
+          <div
+            className="chart-delayed relative mx-auto flex size-44 items-center justify-center rounded-full"
+            style={{ background: donutBackground(items), animationDelay: CHART_ANIMATION_DELAY }}
+            aria-hidden="true"
+          >
             <div className="flex size-28 flex-col items-center justify-center rounded-full bg-[var(--color-surface)] text-center shadow-[inset_0_0_0_1px_var(--color-surface-container-high)]">
               <span className="text-2xl font-semibold text-[var(--color-on-surface)]">{center}</span>
               <span className="mt-1 max-w-20 truncate text-xs text-[var(--color-outline)]">{topItem?.label}</span>
@@ -231,7 +288,7 @@ function DonutPanel({
           <div className="grid gap-3">
             {items.map((item, index) => (
               <div key={item.label} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm">
-                <span className="size-3 rounded-full" style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }} />
+                <span className="size-3 rounded-full" style={{ backgroundColor: item.color || FALLBACK_CHART_COLORS[index % FALLBACK_CHART_COLORS.length] }} />
                 <span className="truncate font-medium text-[var(--color-on-surface)]">{item.label}</span>
                 <span className="text-xs font-semibold text-[var(--color-outline)]">{item.displayValue}</span>
               </div>
@@ -281,9 +338,8 @@ export default async function DashboardPage() {
   const barberById = new Map(barbers.map((item) => [item.id, item.display_name]));
   const pendingConversations = conversations.filter((item) => item.handed_off_to_human || item.assigned_staff_user_id === null);
   const inChair = appointments.filter((item) => item.status === "checked_in").length;
-  const monthlyAppointments = appointmentCountsByMonth(yearlyAppointments);
-  const monthlyLabels = monthLabels(locale);
-  const highestMonthlyCount = Math.max(...monthlyAppointments, 1);
+  const dailyAppointments = appointmentCountsByCurrentMonth(yearlyAppointments, serviceById);
+  const highestDailyCount = Math.max(...dailyAppointments.map((item) => item.total), 1);
   const serviceDistribution = distributionByService(yearlyAppointments, serviceById, d.common.service);
   const specialistDistribution = distributionBySpecialist(yearlyAppointments, barberById, d.common.unassignedBarber);
   const serviceRevenue = revenueByService(yearlyAppointments, serviceById, d.common.service);
@@ -302,28 +358,49 @@ export default async function DashboardPage() {
           <h3 className="app-panel-title">{d.dashboard.monthlyAppointmentsTitle}</h3>
           <p className="app-panel-subtitle mt-1">{d.dashboard.monthlyAppointmentsSubtitle}</p>
         </div>
+        <div className="mt-5 flex flex-wrap gap-4 text-xs font-semibold text-[var(--color-outline)]">
+          <span className="inline-flex items-center gap-2">
+            <span className="size-3 rounded-full" style={{ backgroundColor: SERVICE_CHART_COLORS.cut }} />
+            {d.dashboard.monthlyAppointmentsCut}
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="size-3 rounded-full" style={{ backgroundColor: SERVICE_CHART_COLORS.tanning }} />
+            {d.dashboard.monthlyAppointmentsTanning}
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="size-3 rounded-full" style={{ backgroundColor: SERVICE_CHART_COLORS.other }} />
+            {d.dashboard.monthlyAppointmentsOther}
+          </span>
+        </div>
         <div className="h-72 overflow-x-auto">
-          <div className="grid h-full min-w-[760px] grid-cols-[44px_1fr] gap-4">
+          <div className="grid h-full min-w-[1080px] grid-cols-[44px_1fr] gap-4">
             <div className="flex flex-col justify-between pb-8 text-xs font-semibold text-[var(--color-outline)]">
-              <span>{highestMonthlyCount}</span>
-              <span>{Math.round(highestMonthlyCount / 2)}</span>
+              <span>{highestDailyCount}</span>
+              <span>{Math.round(highestDailyCount / 2)}</span>
               <span>0</span>
             </div>
             <div className="grid grid-rows-[1fr_auto]">
               <div className="relative flex items-end justify-between gap-5 border-b border-[var(--color-surface-container-high)] bg-[linear-gradient(to_bottom,var(--color-surface-container-high)_1px,transparent_1px)] pb-0" style={{ backgroundSize: "100% 33.33%" }}>
-                {monthlyAppointments.map((count, index) => (
-                  <div key={monthlyLabels[index]} className="flex h-full flex-1 items-end justify-center">
+                {dailyAppointments.map((day) => (
+                  <div key={day.day} className="flex h-full flex-1 items-end justify-center">
                     <div
-                      className="w-full max-w-8 rounded-t-[var(--radius-sm)] bg-[var(--color-primary)]"
-                      style={{ height: `${Math.max(count === 0 ? 0 : 8, (count / highestMonthlyCount) * 100)}%` }}
-                      title={`${monthlyLabels[index]}: ${count}`}
-                    />
+                      className="chart-bar-delayed flex w-full max-w-8 flex-col-reverse overflow-hidden rounded-t-[var(--radius-sm)]"
+                      style={{
+                        animationDelay: CHART_ANIMATION_DELAY,
+                        height: `${Math.max(day.total === 0 ? 0 : 8, (day.total / highestDailyCount) * 100)}%`,
+                      }}
+                      title={`${day.day}: ${day.total}`}
+                    >
+                      {day.cut > 0 ? <span style={{ height: `${(day.cut / day.total) * 100}%`, backgroundColor: SERVICE_CHART_COLORS.cut }} /> : null}
+                      {day.tanning > 0 ? <span style={{ height: `${(day.tanning / day.total) * 100}%`, backgroundColor: SERVICE_CHART_COLORS.tanning }} /> : null}
+                      {day.other > 0 ? <span style={{ height: `${(day.other / day.total) * 100}%`, backgroundColor: SERVICE_CHART_COLORS.other }} /> : null}
+                    </div>
                   </div>
                 ))}
               </div>
               <div className="mt-4 flex justify-between gap-5 text-sm font-semibold text-[var(--color-outline)]">
-                {monthlyLabels.map((label) => (
-                  <span key={label} className="flex-1 text-center">{label}</span>
+                {dailyAppointments.map((day) => (
+                  <span key={day.day} className="flex-1 text-center">{day.day}</span>
                 ))}
               </div>
             </div>

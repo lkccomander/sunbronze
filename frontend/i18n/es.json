@@ -75,8 +75,11 @@
       "price": "Precio",
       "specialist": "Especialista"
     },
-    "monthlyAppointmentsTitle": "Citas por mes",
-    "monthlyAppointmentsSubtitle": "Cantidad de citas registradas durante el año actual.",
+    "monthlyAppointmentsTitle": "Citas por día",
+    "monthlyAppointmentsSubtitle": "Cantidad de citas registradas por día durante el mes actual.",
+    "monthlyAppointmentsCut": "Corte",
+    "monthlyAppointmentsTanning": "Bronceado",
+    "monthlyAppointmentsOther": "Otros",
     "serviceDistributionTitle": "Distribución por servicio",
     "serviceDistributionSubtitle": "Citas del año actual agrupadas por servicio.",
     "specialistDistributionTitle": "Distribución por especialista",
