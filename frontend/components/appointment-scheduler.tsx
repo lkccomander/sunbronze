@@ -115,6 +115,10 @@ function minuteOffsetFromDayStart(value: Date): number {
   return (parts.hour - DAY_START_HOUR) * MINUTES_PER_HOUR + parts.minute;
 }
 
+function minuteOffsetFromBusinessParts(parts: { hour: number; minute: number }): number {
+  return (parts.hour - DAY_START_HOUR) * MINUTES_PER_HOUR + parts.minute;
+}
+
 function toInputDateTime(value: Date): string {
   return formatBusinessInputDateTime(value);
 }
@@ -503,10 +507,25 @@ function DayBoard({
   onEditAppointment: (appointment: AppointmentSummary) => void;
   onCancelAppointment: (appointmentId: string) => void;
 }) {
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const dayMinutes = (DAY_END_HOUR - DAY_START_HOUR) * MINUTES_PER_HOUR;
   const boardHeight = dayMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
   const hourMarkers = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, index) => DAY_START_HOUR + index);
   const todayParts = businessDateTimeParts(today);
+  const currentParts = currentTime ? businessDateTimeParts(currentTime) : null;
+  const currentMinuteOffset = currentParts ? minuteOffsetFromBusinessParts(currentParts) : null;
+  const showCurrentTimeIndicator =
+    currentParts !== null &&
+    currentMinuteOffset !== null &&
+    todayParts.year === currentParts.year &&
+    todayParts.month === currentParts.month &&
+    todayParts.day === currentParts.day &&
+    currentMinuteOffset >= 0 &&
+    currentMinuteOffset <= dayMinutes;
+  const currentTimeTop = currentMinuteOffset !== null ? currentMinuteOffset * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR) : 0;
+  const currentTimeLabel = currentTime
+    ? new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone: BUSINESS_TIME_ZONE }).format(currentTime)
+    : "";
   const columns: ScheduleColumn[] = [
     ...barbers.map((item) => ({ id: item.id, label: item.display_name, kind: "barber" as const })),
     ...resources.map((item) => ({ id: item.id, label: item.name, kind: "resource" as const })),
@@ -514,6 +533,12 @@ function DayBoard({
   if (columns.length === 0) {
     columns.push({ id: "open", label: copy.openSchedule, kind: "open" });
   }
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const intervalId = window.setInterval(() => setCurrentTime(new Date()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   return (
     <div className="mt-6 overflow-x-auto">
@@ -527,7 +552,7 @@ function DayBoard({
           ))}
         </div>
 
-        <div className="grid" style={{ gridTemplateColumns: `88px repeat(${columns.length}, minmax(210px, 1fr))` }}>
+        <div className="grid" style={{ gridTemplateColumns: "88px minmax(0, 1fr)" }}>
           <div className="relative border-r border-[var(--color-surface-container-high)] bg-[var(--color-surface-container-lowest)]" style={{ height: boardHeight }}>
             {hourMarkers.map((hour) => (
               <div key={hour} className="absolute left-0 right-0" style={{ top: (hour - DAY_START_HOUR) * HOUR_HEIGHT_PX }}>
@@ -540,69 +565,81 @@ function DayBoard({
             ))}
           </div>
 
-          {columns.map((column) => (
-            <div key={column.id} className="relative border-r border-[var(--color-surface-container-high)] last:border-r-0" style={{ height: boardHeight }}>
-              {hourMarkers.map((hour) => (
-                <div key={hour} className="absolute left-0 right-0 border-t border-dashed border-[var(--color-surface-container-high)]" style={{ top: (hour - DAY_START_HOUR) * HOUR_HEIGHT_PX }} />
-              ))}
-              {appointments
-                .filter((item) => {
-                  if (column.kind === "barber") {
-                    return item.barber_id === column.id;
-                  }
-                  if (column.kind === "resource") {
-                    return item.resource_id === column.id;
-                  }
-                  return !item.barber_id && !item.resource_id;
-                })
-                .map((item) => {
-                  const start = new Date(item.scheduled_start_at);
-                  const end = new Date(item.scheduled_end_at);
-                  const clampedStartMinutes = Math.max(0, minuteOffsetFromDayStart(start));
-                  const clampedEndMinutes = Math.max(0, Math.min(dayMinutes, minuteOffsetFromDayStart(end)));
-                  if (clampedEndMinutes <= 0 || clampedStartMinutes >= dayMinutes || clampedEndMinutes <= clampedStartMinutes) {
-                    return null;
-                  }
-                  const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
-                  const height = Math.max(42, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR) - 4);
-                  return (
-                    <article key={item.id} className={`absolute left-2 right-2 overflow-hidden rounded-[var(--radius-lg)] border p-3 shadow-sm ${appointmentCardClasses(item.status.toLowerCase())}`} style={{ top, height }}>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="min-w-0 truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
-                        {item.status !== "cancelled" ? (
-                          <div className="flex shrink-0 flex-wrap gap-2">
-                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
-                            <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
-                          </div>
-                        ) : null}
-                      </div>
-                      <p className="stat-label mt-1 truncate">{serviceById.get(item.service_id) || common.service}</p>
-                      <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{formatTimeRange(start, end, locale)}</p>
-                      <p className="mt-1 text-xs text-[var(--color-outline)]">{item.resource_id ? resourceById.get(item.resource_id) || common.service : item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
-                    </article>
-                  );
-                })}
-              {timeOff
-                .filter((item) => item.barber_id === column.id)
-                .map((item) => {
-                  const start = new Date(item.starts_at);
-                  const end = new Date(item.ends_at);
-                  const clampedStartMinutes = Math.max(0, minuteOffsetFromDayStart(start));
-                  const clampedEndMinutes = Math.max(0, Math.min(dayMinutes, minuteOffsetFromDayStart(end)));
-                  if (clampedEndMinutes <= 0 || clampedStartMinutes >= dayMinutes || clampedEndMinutes <= clampedStartMinutes) {
-                    return null;
-                  }
-                  const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
-                  const height = Math.max(36, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR));
-                  return (
-                    <article key={item.id} className="absolute left-2 right-2 rounded-[var(--radius-lg)] border border-[var(--color-tertiary-container)] bg-[rgba(247,197,197,0.55)] p-3 shadow-sm" style={{ top, height }}>
-                      <p className="truncate text-sm font-semibold text-[var(--color-on-tertiary-container)]">{item.reason || common.blockTime}</p>
-                      <p className="mt-1 text-xs text-[var(--color-on-tertiary-container)]">{formatTimeRange(start, end, locale)}</p>
-                    </article>
-                  );
-                })}
-            </div>
-          ))}
+          <div className="relative grid" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(210px, 1fr))`, height: boardHeight }}>
+            {showCurrentTimeIndicator ? (
+              <div className="pointer-events-none absolute left-0 right-0 z-20" style={{ top: currentTimeTop }}>
+                <div className="absolute left-0 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-primary)] shadow-sm" />
+                <div className="h-0.5 bg-[var(--color-primary)] shadow-sm" />
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-on-primary)] shadow-sm">
+                  {currentTimeLabel}
+                </div>
+              </div>
+            ) : null}
+
+            {columns.map((column) => (
+              <div key={column.id} className="relative border-r border-[var(--color-surface-container-high)] last:border-r-0" style={{ height: boardHeight }}>
+                {hourMarkers.map((hour) => (
+                  <div key={hour} className="absolute left-0 right-0 border-t border-dashed border-[var(--color-surface-container-high)]" style={{ top: (hour - DAY_START_HOUR) * HOUR_HEIGHT_PX }} />
+                ))}
+                {appointments
+                  .filter((item) => {
+                    if (column.kind === "barber") {
+                      return item.barber_id === column.id;
+                    }
+                    if (column.kind === "resource") {
+                      return item.resource_id === column.id;
+                    }
+                    return !item.barber_id && !item.resource_id;
+                  })
+                  .map((item) => {
+                    const start = new Date(item.scheduled_start_at);
+                    const end = new Date(item.scheduled_end_at);
+                    const clampedStartMinutes = Math.max(0, minuteOffsetFromDayStart(start));
+                    const clampedEndMinutes = Math.max(0, Math.min(dayMinutes, minuteOffsetFromDayStart(end)));
+                    if (clampedEndMinutes <= 0 || clampedStartMinutes >= dayMinutes || clampedEndMinutes <= clampedStartMinutes) {
+                      return null;
+                    }
+                    const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
+                    const height = Math.max(42, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR) - 4);
+                    return (
+                      <article key={item.id} className={`absolute left-2 right-2 overflow-hidden rounded-[var(--radius-lg)] border p-3 shadow-sm ${appointmentCardClasses(item.status.toLowerCase())}`} style={{ top, height }}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="min-w-0 truncate text-sm font-semibold text-[var(--color-on-surface)]">{customerById.get(item.customer_id) || common.customer}</p>
+                          {item.status !== "cancelled" ? (
+                            <div className="flex shrink-0 flex-wrap gap-2">
+                              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditAppointment(item)}>{copy.editAppointment}</button>
+                              <button type="button" className="btn btn-tertiary btn-sm" onClick={() => onCancelAppointment(item.id)}>{copy.cancelAppointment}</button>
+                            </div>
+                          ) : null}
+                        </div>
+                        <p className="stat-label mt-1 truncate">{serviceById.get(item.service_id) || common.service}</p>
+                        <p className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{formatTimeRange(start, end, locale)}</p>
+                        <p className="mt-1 text-xs text-[var(--color-outline)]">{item.resource_id ? resourceById.get(item.resource_id) || common.service : item.barber_id ? barberById.get(item.barber_id) || common.assignedBarber : common.unassignedBarber}</p>
+                      </article>
+                    );
+                  })}
+                {timeOff
+                  .filter((item) => item.barber_id === column.id)
+                  .map((item) => {
+                    const start = new Date(item.starts_at);
+                    const end = new Date(item.ends_at);
+                    const clampedStartMinutes = Math.max(0, minuteOffsetFromDayStart(start));
+                    const clampedEndMinutes = Math.max(0, Math.min(dayMinutes, minuteOffsetFromDayStart(end)));
+                    if (clampedEndMinutes <= 0 || clampedStartMinutes >= dayMinutes || clampedEndMinutes <= clampedStartMinutes) {
+                      return null;
+                    }
+                    const top = clampedStartMinutes * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR);
+                    const height = Math.max(36, (clampedEndMinutes - clampedStartMinutes) * (HOUR_HEIGHT_PX / MINUTES_PER_HOUR));
+                    return (
+                      <article key={item.id} className="absolute left-2 right-2 rounded-[var(--radius-lg)] border border-[var(--color-tertiary-container)] bg-[rgba(247,197,197,0.55)] p-3 shadow-sm" style={{ top, height }}>
+                        <p className="truncate text-sm font-semibold text-[var(--color-on-tertiary-container)]">{item.reason || common.blockTime}</p>
+                        <p className="mt-1 text-xs text-[var(--color-on-tertiary-container)]">{formatTimeRange(start, end, locale)}</p>
+                      </article>
+                    );
+                  })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       {appointments.length === 0 ? <div className="border-t border-ink/10 p-6"><p className="empty-state-title">{copy.emptyTitle}</p></div> : null}
