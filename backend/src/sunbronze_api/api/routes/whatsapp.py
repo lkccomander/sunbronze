@@ -1,9 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from sunbronze_api.api.deps import require_staff_user
+from sunbronze_api.core.config import get_settings
 from sunbronze_api.db.session import get_db_session
 from sunbronze_api.schemas.auth import AuthenticatedUser
 from sunbronze_api.schemas.whatsapp import (
@@ -27,6 +30,7 @@ from sunbronze_api.services.whatsapp import (
 )
 
 router = APIRouter(prefix="/whatsapp")
+logger = logging.getLogger(__name__)
 
 
 @router.get("/webhook", response_model=WhatsAppWebhookVerification)
@@ -60,10 +64,29 @@ async def receive_meta_whatsapp_webhook_route(
     db: Session = Depends(get_db_session),
 ) -> WhatsAppWebhookReceiveAck:
     body = await request.body()
-    verify_meta_webhook_signature(body, x_hub_signature_256)
+    settings = get_settings()
+    try:
+        verify_meta_webhook_signature(body, x_hub_signature_256)
+    except HTTPException as exc:
+        logger.warning(
+            "Rejected Meta webhook request: status=%s reason=%s has_signature=%s body_size=%s has_app_secret=%s user_agent=%s",
+            exc.status_code,
+            exc.detail,
+            bool(x_hub_signature_256),
+            len(body),
+            bool(settings.whatsapp_meta_app_secret),
+            request.headers.get("user-agent", ""),
+        )
+        raise
     try:
         payload = WhatsAppMetaWebhookPayload.model_validate_json(body)
     except ValidationError as exc:
+        logger.warning(
+            "Invalid Meta webhook payload: body_size=%s has_signature=%s error_count=%s",
+            len(body),
+            bool(x_hub_signature_256),
+            len(exc.errors()),
+        )
         raise HTTPException(status_code=422, detail=exc.errors()) from exc
     return handle_meta_webhook(db, payload)
 

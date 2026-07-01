@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Iterable
 
@@ -23,6 +24,8 @@ from sunbronze_api.schemas.whatsapp import (
     WhatsAppWebhookReceiveAck,
 )
 from sunbronze_api.services.whatsapp_booking import advance_whatsapp_booking_flow
+
+logger = logging.getLogger(__name__)
 
 
 def handle_inbound_whatsapp_message(db: Session, message: WhatsAppInboundMessage) -> ConversationStateSummary:
@@ -148,16 +151,19 @@ def verify_meta_webhook_signature(body: bytes, signature_header: str | None) -> 
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Meta webhook app secret is not configured.")
     if not signature_header:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature is missing.")
-    if not signature_header.startswith("sha256="):
+
+    normalized_header = signature_header.strip()
+    algorithm, separator, provided_signature = normalized_header.partition("=")
+    if separator != "=" or algorithm.lower() != "sha256" or not provided_signature:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature format is invalid.")
 
-    expected = hmac.new(
+    expected_signature = hmac.new(
         settings.whatsapp_meta_app_secret.encode("utf-8"),
         body,
         hashlib.sha256,
     ).hexdigest()
-    expected_header = f"sha256={expected}"
-    if not hmac.compare_digest(expected_header, signature_header):
+    if not hmac.compare_digest(expected_signature, provided_signature.lower()):
+        logger.warning("Meta webhook signature mismatch for body_size=%s bytes.", len(body))
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Meta webhook signature does not match.")
 
 

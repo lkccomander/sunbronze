@@ -74,6 +74,22 @@ def test_phase_5_5_meta_webhook_signature_validation_runtime(monkeypatch) -> Non
         get_settings.cache_clear()
 
 
+def test_phase_5_5_meta_webhook_signature_validation_tolerates_header_formatting(monkeypatch) -> None:
+    from sunbronze_api.core.config import get_settings
+    from sunbronze_api.services.whatsapp import verify_meta_webhook_signature
+
+    body = b'{"object":"whatsapp_business_account","entry":[]}'
+    secret = "test-app-secret"
+    signature = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest().upper()
+
+    monkeypatch.setenv("SUNBRONZE_WHATSAPP_META_APP_SECRET", secret)
+    get_settings.cache_clear()
+    try:
+        verify_meta_webhook_signature(body, f"  SHA256={signature}  ")
+    finally:
+        get_settings.cache_clear()
+
+
 def test_phase_5_5_meta_webhook_duplicate_delivery_protection_exists() -> None:
     combined_text = "\n".join(read_text(path) for path in find_python_files("backend/src/sunbronze_api"))
 
